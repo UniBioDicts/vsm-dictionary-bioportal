@@ -1,0 +1,6 @@
+node_modules/
+package*
+resources/
+demo/
+src/
+test.js

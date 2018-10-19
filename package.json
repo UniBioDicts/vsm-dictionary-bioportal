@@ -1,0 +1,48 @@
+{
+  "name": "vsm-dictionary-bioportal",
+  "version": "1.0.0",
+  "description": "Implementation of a VSM-dictionary that interfaces with the BioPortal REST API",
+  "main": "src/DictionaryBioPortal.js",
+  "scripts": {
+    "lint": "eslint src",
+    "lint-fix": "eslint src --fix",
+    "test": "mocha \"src/**/*.test.js\" --check-leaks",
+    "testw": "mocha \"src/**/*.test.js\" --check-leaks --watch",
+    "start": "npm run demo",
+    "demo": "webpack-dev-server --config demo/webpack.config.js"
+  },
+  "keywords": [
+    "VSM",
+    "dictionary",
+    "ontology",
+    "identifier",
+    "term",
+    "bioportal",
+    "interface"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vsmjs/vsm-dictionary-bioportal"
+  },
+  "author": "John Zobolas",
+  "devDependencies": {
+    "@babel/core": "^7.0.0-rc.1",
+    "@babel/preset-env": "^7.0.0-rc.1",
+    "babel-loader": "^8.0.0-beta.4",
+    "chai": "^4.1.2",
+    "copy-webpack-plugin": "^4.5.2",
+    "eslint": "^5.4.0",
+    "eslint-plugin-vue": "^4.7.1",
+    "html-webpack-plugin": "^3.2.0",
+    "mocha": "^5.2.0",
+    "nock": "^9.6.1",
+    "text-transform-loader": "^2.0.0",
+    "webpack": "^4.17.0",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5"
+  },
+  "dependencies": {
+    "vsm-dictionary": "^2.4.2",
+    "xmlhttprequest": "^1.8.0"
+  }
+}
