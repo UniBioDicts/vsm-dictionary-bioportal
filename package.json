@@ -4,7 +4,7 @@
   "description": "Implementation of a VSM-dictionary that interfaces with the BioPortal REST API",
   "main": "src/DictionaryBioPortal.js",
   "scripts": {
-    "lint": "eslint src",
+    "lint": "eslint src demo",
     "lint-fix": "eslint src --fix",
     "test": "mocha \"src/**/*.test.js\" --check-leaks",
     "testw": "mocha \"src/**/*.test.js\" --check-leaks --watch",

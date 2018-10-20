@@ -41,7 +41,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     if (!str)  return cb(null, {items: []});
 
     var url = this.prepareURLString(str, options);
-    console.log('URL: ' + url + '\n');
+    console.log('URL: ' + url);
 
     this.request(url, (err, res) => {
       if (err) return cb(err);

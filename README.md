@@ -91,5 +91,7 @@ BioPortal entry's property | Type | Required | VSM match-object property | Notes
 
 ## Documentation
 
-To see this *README.md* in a nice-looking web-page, run: <br/>
-`gitbook serve` and browse to `http://localhost:4000`.
+To see this *README.md* in a nice-looking web-page:  
+install 'gitbook' with: `npm install gitbook-cli -g`,  
+run: `gitbook serve`,  
+and browse to [http://localhost:4000](http://localhost:4000).

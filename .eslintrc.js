@@ -3,24 +3,15 @@ module.exports = {
     browser: true,
     es6: true,
     node: true,
-    mocha: true  // => no 'no-undef' error for `describe`/`it` in mocha tests.
+    mocha: true
   },
-  globals: {  // Prevent 'no-undef' errors for globally available functions.
-    Vue: true,
-    expect: true,  // Chai's `expect`.
-    sinon: true,
-    mount: true,         // } From 'vue-test-utils'.
-    shallowMount: true,  // }
-    L: true,  // } Some easy data-inspection functions.
-    D: true,  // }
-    H: true   // }
+  globals: {
+    VsmDictionaryBioPortal: true,
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:vue/recommended'
-  ],
-  parserOptions: { sourceType: 'module' },
-  plugins: ['vue'],
+  parserOptions: {
+    ecmaVersion: 2018
+  },
+  extends: 'eslint:recommended',
   rules: {
     'indent': ['error', 2],
     'linebreak-style': ['error', 'unix'],

@@ -9,7 +9,8 @@ global variable `VsmDictionaryBioPortal` that can be accessed by this script.
 Webpack serves the bundle in-memory (so, writing no files to disk), along with
 an updated demo.html webpage that loads both that bundle and this demo-script.
 
-In the browser, Webpack lets us access `VsmDictionaryBioPortal` as a global variable.
+In the browser, Webpack lets us access `VsmDictionaryBioPortal` as a global
+variable.
 */
 
 runDemo();
@@ -112,9 +113,9 @@ function createDemoPanel(opt) {
   };
 
   function searchOptionsFunc() {
-    function makeZObject() {
-      return false;
-    }
+    //function makeZObject() {
+    //  return false;
+    //}
 
     return {
       filter: {
@@ -123,15 +124,16 @@ function createDemoPanel(opt) {
       sort: {
         dictID: dictSorterInput.value.split(',')
       },
-      z: (zFilterInput.value === '') ? true : zFilterInput.value.split(","),
+      z: (zFilterInput.value === '') ? true : zFilterInput.value.split(','),
       page: opt.pageNumber,
       perPage: opt.matchesMaxCount
-    }
+    };
   }
 }
 
 function getNewMatches(dict, str, options, stringInput,
-    dictFilterInput, dictSorterInput, zFilterInput, output) {
+  dictFilterInput, dictSorterInput, zFilterInput, output
+) {
 
   dict.getMatchesForString(str, options, function (err, res) {
     if (err)  { output.innerHTML = err;  return }
@@ -140,11 +142,13 @@ function getNewMatches(dict, str, options, stringInput,
     }
 
     // Place the results, but only if the inputs haven't changed yet
-    if (( stringInput.value === str ) &&
-      ( dictFilterInput.value === options.filter.dictID.toString() ) &&
-      ( dictSorterInput.value === options.sort.dictID.toString() ) &&
-      ( Array.isArray(options.z) && ( zFilterInput.value === options.z.toString()) ||
-        ( zFilterInput.value === '' ))) {
+    if (
+      stringInput.value === str  &&
+      dictFilterInput.value === options.filter.dictID.toString()  &&
+      dictSorterInput.value === options.sort  .dictID.toString()  &&
+      (Array.isArray(options.z)  &&  zFilterInput.value === options.z.toString()
+        ||  zFilterInput.value === '')
+    ) {
       //output.innerHTML = JSON.stringify(res, null, 4);
       output.innerHTML = s;
     } //else console.log('Inputs have changed, so no new output')
