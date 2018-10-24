@@ -56,25 +56,25 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     var url = this.urlGetMatches
       .replace('$queryString', encodeURIComponent(str));
 
-    if ((options.hasOwnProperty('filter')) &&
-        (options.filter.hasOwnProperty('dictID')) &&
-        (options.filter.dictID.length !== 0)) {
+    if (options.hasOwnProperty('filter') &&
+        options.filter.hasOwnProperty('dictID') &&
+        options.filter.dictID.length !== 0) {
       var onto = options.filter.dictID.toString();
       url += '&ontologies=' + onto;
     }
 
     // default value is 1 (from the API doc)
-    if ((options.hasOwnProperty('page')) &&
-        (Number.isInteger(options.page)) &&
-        (options.page >= 1)) {
+    if (options.hasOwnProperty('page') &&
+        Number.isInteger(options.page) &&
+        options.page >= 1) {
       var pageNumber = options.page;
       url += '&page=' + pageNumber;
     }
 
     // default value is 50 (from the API doc)
-    if ((options.hasOwnProperty('perPage')) &&
-        (Number.isInteger(options.perPage)) &&
-        (options.perPage >= 1)) {
+    if (options.hasOwnProperty('perPage') &&
+        Number.isInteger(options.perPage) &&
+        options.perPage >= 1) {
       var NumOfResultsPerPage = options.perPage;
       url += '&pagesize=' + NumOfResultsPerPage;
     }
@@ -88,12 +88,12 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       id: entry['@id'],
       dictID: entry.links.ontology.split('/').pop(),
       str: entry.prefLabel,
-      ...((typeof entry.definition !== 'undefined') &&
+      ...((entry.definition !== undefined) &&
         {
           descr: entry.definition[0] // take just the first definition
         }),
       type: entry.prefLabel.startsWith(str) ? 'S' : 'T',
-      ...((typeof entry.synonym !== 'undefined') &&
+      ...((entry.synonym !== undefined) &&
         {
           terms: entry.synonym.map(syn => ({
             str: syn
@@ -101,11 +101,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
         }),
       z: {
         dictURL: entry.links.ontology,
-        ...((typeof entry.cui !== 'undefined') &&
+        ...((entry.cui !== undefined) &&
           {
             cui: entry.cui // Concept Unique Identifiers
           }),
-        ...((typeof entry.semanticType !== 'undefined') &&
+        ...((entry.semanticType !== undefined) &&
           {
             tui: entry.semanticType // Type Unique Identifiers
           })

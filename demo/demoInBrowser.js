@@ -113,10 +113,6 @@ function createDemoPanel(opt) {
   };
 
   function searchOptionsFunc() {
-    //function makeZObject() {
-    //  return false;
-    //}
-
     return {
       filter: {
         dictID: dictFilterInput.value.split(',')
