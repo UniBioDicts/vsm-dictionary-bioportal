@@ -33,26 +33,26 @@ describe('DictionaryBioPortal.js', () => {
   var matchObjArray =  [
     {
       id:     'http://purl.obolibrary.org/obo/DOID_1909',
-      dictID: 'CLO',
+      dictID: 'http://data.bioontology.org/ontologies/CLO',
       str:    'melanoma',
       descr:  'A cell type cancer that has_material_basis_in abnormally proliferating cells derives_from melanocytes which are found in skin, the bowel and the eye.',
       type:   'S',
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/CLO'
+        dictAbbrev: 'CLO'
       }
     },
     {
       id:     'http://www.radlex.org/RID/#RID34617',
-      dictID: 'RADLEX',
+      dictID: 'http://data.bioontology.org/ontologies/RADLEX',
       str:    'melanoma',
       type:   'S',
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/RADLEX'
+        dictAbbrev: 'RADLEX'
       }
     },
     {
       id:     'http://purl.obolibrary.org/obo/DOID_1909',
-      dictID: 'VO',
+      dictID: 'http://data.bioontology.org/ontologies/VO',
       str:    'melanoma',
       descr:  'A cell type cancer that has_material_basis_in abnormally proliferating cells derived_from melanocytes which are found in skin, the bowel and the eye.',
       type:   'S',
@@ -65,45 +65,45 @@ describe('DictionaryBioPortal.js', () => {
         }
       ],
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/VO'
+        dictAbbrev: 'VO'
       }
     },
     {
       id:     'http://scai.fraunhofer.de/CSEO#Melanoma',
-      dictID: 'CSEO',
+      dictID: 'http://data.bioontology.org/ontologies/CSEO',
       str:    'Melanoma',
       type:   'T',
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/CSEO'
+        dictAbbrev: 'CSEO'
       }
     },
     {
       id:     'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#Melanoma',
-      dictID: 'MCCL',
+      dictID: 'http://data.bioontology.org/ontologies/MCCL',
       str:    'Melanoma',
       type:   'T',
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/MCCL'
+        dictAbbrev: 'MCCL'
       }
     }
   ];
   var matchObjArraySorted = [
     {
       id: 'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#Melanoma',
-      dictID: 'MCCL',
+      dictID: 'http://data.bioontology.org/ontologies/MCCL',
       str: 'Melanoma',
       type: 'T',
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/MCCL'
+        dictAbbrev: 'MCCL'
       }
     },
     {
       id: 'http://www.radlex.org/RID/#RID34617',
-      dictID: 'RADLEX',
+      dictID: 'http://data.bioontology.org/ontologies/RADLEX',
       str: 'melanoma',
       type: 'S',
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/RADLEX',
+        dictAbbrev: 'RADLEX',
         cui: [
           'C0025202'
         ],
@@ -114,7 +114,7 @@ describe('DictionaryBioPortal.js', () => {
     },
     {
       id: 'http://purl.obolibrary.org/obo/DOID_1909',
-      dictID: 'VO',
+      dictID: 'http://data.bioontology.org/ontologies/VO',
       str: 'melanoma',
       descr: 'A cell type cancer that has_material_basis_in abnormally proliferating cells derived_from melanocytes which are found in skin, the bowel and the eye.',
       type: 'S',
@@ -127,193 +127,193 @@ describe('DictionaryBioPortal.js', () => {
         }
       ],
       z: {
-        dictURL: 'http://data.bioontology.org/ontologies/VO'
+        dictAbbrev: 'VO'
       }
     }
   ];
   var testMatchObjArray = [
     {
       id:     'id1',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'melanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id2',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'zelanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id3',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'xelanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id4',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'zelanoma',
       descr:  'A definition',
       type:   'T',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id5',
-      dictID: 'c',
+      dictID: 'http://test/ontologies/c',
       str:    'melanoma',
       descr:  'A definition',
       type:   'T',
       z: {
-        dictURL: 'http://test/ontologies/c'
+        dictAbbrev: 'c'
       }
     },
     {
       id:     'id6',
-      dictID: 'b',
+      dictID: 'http://test/ontologies/b',
       str:    'melanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/b'
+        dictAbbrev: 'b'
       }
     }
   ];
   var testMatchObjArraySortedWithPrefDict = [
     {
       id: 'id5',
-      dictID: 'c',
+      dictID: 'http://test/ontologies/c',
       str: 'melanoma',
       descr: 'A definition',
       type: 'T',
       z: {
-        dictURL: 'http://test/ontologies/c'
+        dictAbbrev: 'c'
       }
     },
     {
       id: 'id1',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str: 'melanoma',
       descr: 'A definition',
       type: 'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id: 'id6',
-      dictID: 'b',
+      dictID: 'http://test/ontologies/b',
       str: 'melanoma',
       descr: 'A definition',
       type: 'S',
       z: {
-        dictURL: 'http://test/ontologies/b'
+        dictAbbrev: 'b'
       }
     },
     {
       id: 'id3',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str: 'xelanoma',
       descr: 'A definition',
       type: 'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id: 'id2',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str: 'zelanoma',
       descr: 'A definition',
       type: 'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id: 'id4',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str: 'zelanoma',
       descr: 'A definition',
       type: 'T',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     }
   ];
   var testMatchObjArraySortedWithoutPrefDict = [
     {
       id:     'id1',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'melanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id6',
-      dictID: 'b',
+      dictID: 'http://test/ontologies/b',
       str:    'melanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/b'
+        dictAbbrev: 'b'
       }
     },
     {
       id:     'id3',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'xelanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id2',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'zelanoma',
       descr:  'A definition',
       type:   'S',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
     {
       id:     'id5',
-      dictID: 'c',
+      dictID: 'http://test/ontologies/c',
       str:    'melanoma',
       descr:  'A definition',
       type:   'T',
       z: {
-        dictURL: 'http://test/ontologies/c'
+        dictAbbrev: 'c'
       }
     },
     {
       id:     'id4',
-      dictID: 'A',
+      dictID: 'http://test/ontologies/A',
       str:    'zelanoma',
       descr:  'A definition',
       type:   'T',
       z: {
-        dictURL: 'http://test/ontologies/A'
+        dictAbbrev: 'A'
       }
     },
   ];
@@ -371,8 +371,13 @@ describe('DictionaryBioPortal.js', () => {
         reply(200, jsonMelanomaFilteredStringResponse);
       dict.getEntryMatchesForString(melanomaStr,
         {
-          filter: {dictID: ['RADLEX', 'MCCL', 'VO']},
-          sort: {dictID: ['MCCL']}
+          filter: { dictID:
+            [ 'http://data.bioontology.org/ontologies/RADLEX',
+              'http://data.bioontology.org/ontologies/MCCL',
+              'http://data.bioontology.org/ontologies/VO'
+            ]},
+          sort: { dictID:
+              ['http://data.bioontology.org/ontologies/MCCL']}
         }, (err, res) => {
           expect(err).to.equal(null);
           res.should.deep.equal({items: matchObjArraySorted});
@@ -390,7 +395,7 @@ describe('DictionaryBioPortal.js', () => {
       // with the specified z-prune options
       var expectedResult = JSON.parse(JSON.stringify(matchObjArraySorted));
       expectedResult.forEach(entry => {
-        if (entry.dictID === 'RADLEX') {
+        if (entry.dictID === 'http://data.bioontology.org/ontologies/RADLEX') {
           delete entry.z.cui;
           delete entry.z.tui;
         }
@@ -398,9 +403,14 @@ describe('DictionaryBioPortal.js', () => {
 
       dict.getEntryMatchesForString(melanomaStr,
         {
-          filter: {dictID: ['RADLEX', 'MCCL', 'VO']},
-          sort: {dictID: ['MCCL']},
-          z: ['dictURL']
+          filter: { dictID:
+              [ 'http://data.bioontology.org/ontologies/RADLEX',
+                'http://data.bioontology.org/ontologies/MCCL',
+                'http://data.bioontology.org/ontologies/VO'
+              ]},
+          sort: { dictID:
+              ['http://data.bioontology.org/ontologies/MCCL']},
+          z: ['dictAbbrev']
         }, (err, res) => {
           expect(err).to.equal(null);
           res.should.deep.equal({items: expectedResult});
@@ -446,21 +456,26 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns proper url when a non-proper filter property is given', cb => {
       var url = dict.prepareURLString('searchString',
-        { filter :  { wrongProperty : ['o'] }});
+        { filter : { wrongProperty : ['o'] }});
       url.should.equal(testURLBase + '/search?q=searchString&display_context=false');
       cb();
     });
 
     it('returns proper url when the dictID filter property is an empty array', cb => {
       var url = dict.prepareURLString('searchString',
-        { filter :  { dictID : [] }});
+        { filter : { dictID : [] }});
       url.should.equal(testURLBase + '/search?q=searchString&display_context=false');
       cb();
     });
 
     it('returns proper url when the dictID filter property is an non-empty array', cb => {
       var url = dict.prepareURLString('searchString',
-        { filter :  { dictID : ['A','B','C'] }});
+        { filter : { dictID :
+          [ 'http://test/ontologies/A',
+            'http://test/ontologies/B',
+            'http://test/ontologies/C'
+          ]}
+        });
       url.should.equal(testURLBase + '/search?q=searchString&ontologies=A,B,C&display_context=false');
       cb();
     });
@@ -504,7 +519,8 @@ describe('DictionaryBioPortal.js', () => {
 
   describe('sortWithPreferredDict', () => {
     it('sorts results taking care of the preferred dictionaries first', cb => {
-      var arr = dict.sortWithPreferredDict(testMatchObjArray, { sort: { dictID: ['c'] }});
+      var arr = dict.sortWithPreferredDict(testMatchObjArray,
+        { sort: { dictID: ['http://test/ontologies/c'] }});
       arr.should.deep.equal(testMatchObjArraySortedWithPrefDict);
       cb();
     });

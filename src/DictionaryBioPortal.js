@@ -12,12 +12,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     // no context-related info is needed for matching to VSM terms
     this.noContextField = '&display_context=false';
 
-    /*
-    this.urlGetDictInfos = opt.urlGetDictInfos ||
+    /*this.urlGetDictInfos = opt.urlGetDictInfos ||
 			baseUrl + '/dic?id=$filterID&name=$filterName&sort=$sort' + pp;
 	this.urlGetEntries   = opt.urlGetEntries   ||
-			baseUrl + '/ent?id=$filterID&dictID=$filterDictID&z=$z&sort=$sort'+ pp;
-	*/
+			baseUrl + '/ent?id=$filterID&dictID=$filterDictID&z=$z&sort=$sort'+ pp;*/
 
     this.urlGetMatches   = opt.urlGetMatches   ||
 			baseUrl + '/search?q=$queryString';
@@ -59,8 +57,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     if (options.hasOwnProperty('filter') &&
         options.filter.hasOwnProperty('dictID') &&
         options.filter.dictID.length !== 0) {
-      var onto = options.filter.dictID.toString();
-      url += '&ontologies=' + onto;
+      var onto = options.filter.dictID.map(
+        dictid => dictid.split('/').pop()
+      );
+      url += '&ontologies=' + onto.toString();
     }
 
     // default value is 1 (from the API doc)
@@ -86,7 +86,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   processBioPortalResponse(res, str, cb) {
     var matchObjArray = res.collection.map(entry => ({
       id: entry['@id'],
-      dictID: entry.links.ontology.split('/').pop(),
+      dictID: entry.links.ontology,
       str: entry.prefLabel,
       ...((entry.definition !== undefined) &&
         {
@@ -100,7 +100,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           }))
         }),
       z: {
-        dictURL: entry.links.ontology,
+        dictAbbrev: entry.links.ontology.split('/').pop(),
         ...((entry.cui !== undefined) &&
           {
             cui: entry.cui // Concept Unique Identifiers

@@ -19,20 +19,22 @@ function runDemo() {
   // Remove the warning message of running this demo without Webpack.
   if (VsmDictionaryBioPortal) document.getElementById('demo').innerHTML = '';
 
-  makeDemoRemote();
+  makeDemoBioPortal();
 }
 
-function makeDemoRemote() {
+function makeDemoBioPortal() {
 
   var apiKey = '5904481f-f6cb-4c71-94d8-3b775cf0f19e';
   var dict = new VsmDictionaryBioPortal({apiKey: apiKey});
+  this.urlRegex = /http:\/\/data.bioontology.org\/ontologies\//g;
+  this.ontoURL = 'http://data.bioontology.org/ontologies/';
 
   var elems = createDemoPanel({
     title: 'Demo of the \'getMatchesForString()\' function:<br>',
     dictionary: dict,
     dictIDFilter: 'RH-MESH,MCCL,CHEAR',
     dictIDSorter: 'CHEAR',
-    z: 'dictURL',
+    z: 'dictAbbrev',
     matchesMaxCount: 40,
     pageNumber: 1,
     initialSearchStr: 'melanoma',
@@ -60,7 +62,7 @@ function createDemoPanel(opt) {
 
   dictFilterInput.setAttribute('style', 'margin: 0 0 0 10px; width: 200px');
   dictFilterInput.setAttribute('placeholder', 'dictID');
-  dictFilterInput.setAttribute('title','dictIDs, comma seperated, used for filtering');
+  dictFilterInput.setAttribute('title','dictAbbrev(s), comma separated, used for filtering');
   dictFilterInput.value = opt.dictIDFilter;
   dictFilterInput.addEventListener('input', function () {
     stringInput.dispatchEvent(new Event('input', {}));  // Make the main input fire.
@@ -68,7 +70,7 @@ function createDemoPanel(opt) {
 
   dictSorterInput.setAttribute('style', 'margin: 0 0 0 10px; width: 200px');
   dictSorterInput.setAttribute('placeholder', 'dictID');
-  dictSorterInput.setAttribute('title','preferred dictIDs, comma seperated, used for sorting');
+  dictSorterInput.setAttribute('title','preferred dictAbbrev(s), comma separated, used for sorting');
   dictSorterInput.value = opt.dictIDSorter;
   dictSorterInput.addEventListener('input', function () {
     stringInput.dispatchEvent(new Event('input', {}));  // Make the main input fire.
@@ -76,7 +78,7 @@ function createDemoPanel(opt) {
 
   zFilterInput.setAttribute('style', 'margin: 0 0 0 10px; width: 100px');
   zFilterInput.setAttribute('placeholder', 'z');
-  zFilterInput.setAttribute('title','z-properties, comma seperated, to be kept in the ' +
+  zFilterInput.setAttribute('title','z-properties, comma separated, to be kept in the ' +
     'result (if left empty, all properties will be kept)');
   zFilterInput.value = opt.z;
   zFilterInput.addEventListener('input', function () {
@@ -115,10 +117,14 @@ function createDemoPanel(opt) {
   function searchOptionsFunc() {
     return {
       filter: {
-        dictID: dictFilterInput.value.split(',')
+        dictID: dictFilterInput.value.split(',').map(
+          dictAbbrev => this.ontoURL.concat(dictAbbrev)
+        )
       },
       sort: {
-        dictID: dictSorterInput.value.split(',')
+        dictID: dictSorterInput.value.split(',').map(
+          dictAbbrev =>this.ontoURL.concat(dictAbbrev)
+        )
       },
       z: (zFilterInput.value === '') ? true : zFilterInput.value.split(','),
       page: opt.pageNumber,
@@ -128,8 +134,7 @@ function createDemoPanel(opt) {
 }
 
 function getNewMatches(dict, str, options, stringInput,
-  dictFilterInput, dictSorterInput, zFilterInput, output
-) {
+  dictFilterInput, dictSorterInput, zFilterInput, output) {
 
   dict.getMatchesForString(str, options, function (err, res) {
     if (err)  { output.innerHTML = err;  return }
@@ -140,14 +145,16 @@ function getNewMatches(dict, str, options, stringInput,
     // Place the results, but only if the inputs haven't changed yet
     if (
       stringInput.value === str  &&
-      dictFilterInput.value === options.filter.dictID.toString()  &&
-      dictSorterInput.value === options.sort  .dictID.toString()  &&
+      dictFilterInput.value === options.filter.dictID.toString().
+        replace(this.urlRegex,'')  &&
+      dictSorterInput.value === options.sort  .dictID.toString().
+        replace(this.urlRegex,'')  &&
       (Array.isArray(options.z)  &&  zFilterInput.value === options.z.toString()
         ||  zFilterInput.value === '')
     ) {
       //output.innerHTML = JSON.stringify(res, null, 4);
       output.innerHTML = s;
-    } //else console.log('Inputs have changed, so no new output')
+    } else console.log('Inputs have changed, so no new output');
 
   });
 }
@@ -155,9 +162,9 @@ function getNewMatches(dict, str, options, stringInput,
 function matchToString(m) {
   var n = '</span>';
   var arr = [
-    'type:\''   + m.type,
-    'dictID:\'' + m.dictID,
-    'id:\'<span style="font-weight:800; color:#737373">' + m.id  + n,
+    'type:\'<span style="font-weight:800; color:#FF0000">' + m.type + n,
+    'dictID:\'<span style="font-weight:800; color:#6A5ACD">' + m.dictID + n,
+    'id:\'<span style="font-weight:800; color:#000000">' + m.id  + n,
     'str:\'<span style="font-weight:800; color:#a00">'   + m.str + n,
   ];
   if (m.style)  arr.push('style:\'<span style="color:#66e">' + m.style + n);

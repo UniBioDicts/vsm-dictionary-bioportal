@@ -20,8 +20,12 @@ var DictionaryBioPortal = require('./DictionaryBioPortal');
 var apiKey = 'a-valid-API-key-string';
 var dict = new DictionaryBioPortal({apiKey: apiKey});
 dict.getMatchesForString('melanoma', 
-{ filter: { dictID : ['RH-MESH', 'MCCL', 'CHEAR'] }, 
-  sort: { dictID : ['CHEAR'] },
+  { filter: { dictID : [
+    'http://data.bioontology.org/ontologies/RH-MESH',
+    'http://data.bioontology.org/ontologies/MCCL',
+    'http://data.bioontology.org/ontologies/CHEAR' 
+    ]},
+    sort: { dictID : ['http://data.bioontology.org/ontologies/CHEAR'] },
   z: true,
   page: 1,
   perPage: 20 
@@ -42,9 +46,9 @@ The demo currently supports only the `getMatchesForString()` function.
 This command automatically opens a browser page with 4 input-fields to
 search on BioPortal ontology data. The 4 inputs fields represent:
 + The string to search results for
-+ The dictionary IDs (ontology IDs), comma separated, that will be used 
-as arguments for filtering the results
-+ The preferred dictionary IDs (ontology IDs), comma separated, that 
++ The dictionary abbreviations (e.g. GO,MCCL), comma separated, that 
+will be used as arguments for filtering the results
++ The preferred dictionary abbreviations, comma separated, that 
 will be used as arguments for sorting the results
 + The z-object's properties to be kept in the result (if left empty, 
 all properties will be shown).
@@ -81,11 +85,11 @@ fully detailed in the table below:
 BioPortal entry's property | Type | Required | VSM match-object property | Notes  
 :---:|:---:|:---:|:---:|---
 `@id` | URL | **YES** | `id` | the concept-ID
-`links.ontology` | URL | **YES** | `dictID` | the unique name of the ontology (part of the URL) 
+`links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology 
 `prefLabel` | String | **YES** | `str` | the string representation of the term
 `definition` | Array | NO | `descr` | we map the first definition only
 `synonym` | Array | NO | `terms.str` | we map the whole array
-`links.ontology` | URL | **YES** | `z.dictURL` | the (unique) ontology URL
+`links.ontology` | URL | **YES** | `z.dictAbbrev` | the (unique) ontology abbreviation
 `cui` | Array | NO | `z.cui` | Concept Unique Identifier
 `semanticType` | Array | NO | `z.tui` | Type Unique Identifier
 
