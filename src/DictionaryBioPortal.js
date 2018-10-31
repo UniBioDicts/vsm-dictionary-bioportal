@@ -36,45 +36,120 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }*/
 
   getEntryMatchesForString(str, options, cb) {
-    if (!str)  return cb(null, {items: []});
+    if (!str) return cb(null, { items: [] });
 
-    var url = this.prepareURLString(str, options);
-    console.log('URL: ' + url);
+    var urlArray = this.buildURLs(str, options);
+    var callsRemaining = urlArray.length;
+    var urlToResultsMap = new Map();
 
-    this.request(url, (err, res) => {
-      if (err) return cb(err);
-      this.processBioPortalResponse(res, str, (err, matchObjArray) => {
-        var arr = Dictionary.zPropPrune(matchObjArray, options.z);
-        cb(err, { items : this.sortMatches(arr, options) });
+    for (let url of urlArray) {
+      console.log('URL: ' + url);
+      urlToResultsMap.set(url, []);
+
+      this.request(url, (err, res) => {
+        if (err) return cb(err);
+        urlToResultsMap.set(url, this.processBioPortalResponse(res, str));
+
+        --callsRemaining;
+        /** all calls have returned, so prune, sort and trim results */
+        if (callsRemaining <= 0) {
+          urlToResultsMap = this.pruneCommonResults(urlToResultsMap);
+
+          var arr = [];
+          for (var matchObjArray of urlToResultsMap.values()) {
+            arr = arr.concat(this.sortWithoutPreferredDict(
+              Dictionary.zPropPrune(matchObjArray, options.z))
+            );
+          }
+
+          if (this.hasProperPerPageProperty(options)) {
+            arr = arr.splice(0, options.perPage);
+          } else {
+            arr = arr.splice(0, 50); // BioPortal's API default pagesize value
+          }
+
+          cb(err, { items: arr });
+        }
       });
+    }
+  }
+
+  buildURLs(str, options) {
+    var obj = this.splitDicts(options);
+    var pref = this.getDictAbbrev(obj.pref);
+    var rest = this.getDictAbbrev(obj.rest);
+
+    if (pref.length === 0 && rest.length === 0)
+      return [this.prepareURLString(str, options, [])];
+    else if (pref.length === 0 && rest.length !== 0)
+      return [this.prepareURLString(str, options, rest)];
+    else if (pref.length !== 0 && rest.length === 0) {
+      if (!options.hasOwnProperty('page') ||
+        this.hasPagePropertyEqualToOne(options))
+        return [this.prepareURLString(str, options, pref)].
+          concat([this.prepareURLString(str, options, [])]);
+      else return [this.prepareURLString(str, options, [])];
+    } else if (pref.length !== 0 && rest.length !== 0) {
+      if (!options.hasOwnProperty('page') ||
+        this.hasPagePropertyEqualToOne(options))
+        return [this.prepareURLString(str, options, pref)].
+          concat([this.prepareURLString(str, options, rest)]);
+      else return [this.prepareURLString(str, options, pref.concat(rest))];
+    }
+  }
+
+  splitDicts(options) {
+    if (!this.hasProperSortDictIDProperty(options))
+      return ({
+        pref: [],
+        rest: this.hasProperFilterDictIDProperty(options) ?
+          options.filter.dictID : []
+      });
+    else if (this.hasProperFilterDictIDProperty(options)) {
+      if (options.filter.dictID.every(
+        dictid => options.sort.dictID.includes(dictid)))
+        return {
+          pref: [],
+          rest: options.filter.dictID
+        };
+      else {
+        return {
+          pref: options.sort.dictID.reduce((res, dictid) => {
+            if (options.filter.dictID.includes(dictid))
+              res.push(dictid);
+            return res;
+          }, []),
+          rest: options.filter.dictID.reduce((res, dictid) => {
+            if (!options.sort.dictID.includes(dictid))
+              res.push(dictid);
+            return res;
+          }, [])
+        };
+      }
+    } else return ({
+      pref: options.sort.dictID,
+      rest: []
     });
   }
 
-  prepareURLString(str, options) {
+  getDictAbbrev(arr) {
+    if (arr.length === 0) return arr;
+    return arr.map(dictid => dictid.split('/').pop());
+  }
+
+  prepareURLString(str, options, ontologiesArray) {
     var url = this.urlGetMatches
       .replace('$queryString', encodeURIComponent(str));
 
-    if (options.hasOwnProperty('filter') &&
-        options.filter.hasOwnProperty('dictID') &&
-        options.filter.dictID.length !== 0) {
-      var onto = options.filter.dictID.map(
-        dictid => dictid.split('/').pop()
-      );
-      url += '&ontologies=' + onto.toString();
-    }
+    if (ontologiesArray.length !== 0)
+      url += '&ontologies=' + ontologiesArray.toString();
 
-    // default value is 1 (from the API doc)
-    if (options.hasOwnProperty('page') &&
-        Number.isInteger(options.page) &&
-        options.page >= 1) {
+    if (this.hasProperPageProperty(options)) {
       var pageNumber = options.page;
       url += '&page=' + pageNumber;
     }
 
-    // default value is 50 (from the API doc)
-    if (options.hasOwnProperty('perPage') &&
-        Number.isInteger(options.perPage) &&
-        options.perPage >= 1) {
+    if (this.hasProperPerPageProperty(options)) {
       var NumOfResultsPerPage = options.perPage;
       url += '&pagesize=' + NumOfResultsPerPage;
     }
@@ -83,8 +158,8 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     return url;
   }
 
-  processBioPortalResponse(res, str, cb) {
-    var matchObjArray = res.collection.map(entry => ({
+  processBioPortalResponse(res, str) {
+    return res.collection.map(entry => ({
       id: entry['@id'],
       dictID: entry.links.ontology,
       str: entry.prefLabel,
@@ -111,7 +186,6 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           })
       }
     }));
-    cb(null, matchObjArray);
   }
 
   request(url, cb) {
@@ -140,13 +214,82 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     )();
   }
 
+  /** Check the case where you have two URLs, corresponding
+   *  to cases where options.sort was defined but not
+   *  options.filter or both were sufficiently defined to
+   *  partition between preferred dictionaries (1st URL) and
+   *  the rest (2nd URL). Such cases may have common results
+   *  which we prune (pruning is done based on common `id` property)
+   */
+  pruneCommonResults(urlToResultsMap) {
+    if (urlToResultsMap.size === 2) {
+      var urls = Array.from(urlToResultsMap.keys());
+      var firstURL = urls[0];
+      var secondURL = urls[1];
+      var matchObjArray1 = urlToResultsMap.get(firstURL);
+      var matchObjArray2 = urlToResultsMap.get(secondURL);
+      var ids1 = this.getIDsFromMatchObjArray(matchObjArray1);
+
+      matchObjArray2 = matchObjArray2.filter(matchObj => {
+        if (!ids1.includes(matchObj.id)) {
+          return matchObj;
+        } //else console.log('Prune: ' + matchObj.id);
+      });
+      urlToResultsMap.set(secondURL, matchObjArray2);
+    }
+    return urlToResultsMap;
+  }
+
+  extractOntologiesFromURL(url) {
+    var regex = /&ontologies=(.*?)&/g;
+    var res = regex.exec(url);
+    if (res) return res[1]; else return '';
+  }
+
+  getIDsFromMatchObjArray(arr) {
+    return arr.reduce((res, matchObj) => {
+      if (matchObj.id) res.push(matchObj.id);
+      return res;
+    }, []);
+  }
+
   sortMatches(arr, options) {
-    if ((options.hasOwnProperty('sort')) &&
-      (options.sort.hasOwnProperty('dictID')) &&
-      (options.sort.dictID.length !== 0))
+    if (this.hasProperSortDictIDProperty(options))
       return this.sortWithPreferredDict(arr, options);
     else
       return this.sortWithoutPreferredDict(arr);
+  }
+
+  hasProperFilterDictIDProperty(options) {
+    return options.hasOwnProperty('filter') &&
+      options.filter.hasOwnProperty('dictID') &&
+      options.filter.dictID.length !== 0;
+  }
+
+  hasProperSortDictIDProperty(options) {
+    return options.hasOwnProperty('sort') &&
+      options.sort.hasOwnProperty('dictID') &&
+      options.sort.dictID.length !== 0;
+  }
+
+  hasProperPageProperty(options) {
+    // default value is 1 (from the API doc)
+    return options.hasOwnProperty('page') &&
+      Number.isInteger(options.page) &&
+      options.page >= 1;
+  }
+
+  hasPagePropertyEqualToOne(options) {
+    return options.hasOwnProperty('page') &&
+      Number.isInteger(options.page) &&
+      options.page === 1;
+  }
+
+  hasProperPerPageProperty(options) {
+    // default value is 50 (from the API doc)
+    return options.hasOwnProperty('perPage') &&
+      Number.isInteger(options.perPage) &&
+      options.perPage >= 1;
   }
 
   sortWithPreferredDict(arr, options) {
