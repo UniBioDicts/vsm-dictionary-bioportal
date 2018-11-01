@@ -21,15 +21,15 @@ var apiKey = 'a-valid-API-key-string';
 var dict = new DictionaryBioPortal({apiKey: apiKey});
 dict.getMatchesForString('melanoma', 
   { filter: { dictID : [
-    'http://data.bioontology.org/ontologies/RH-MESH',
-    'http://data.bioontology.org/ontologies/MCCL',
-    'http://data.bioontology.org/ontologies/CHEAR' 
+      'http://data.bioontology.org/ontologies/RH-MESH',
+      'http://data.bioontology.org/ontologies/MCCL',
+      'http://data.bioontology.org/ontologies/CHEAR' 
     ]},
     sort: { dictID : ['http://data.bioontology.org/ontologies/CHEAR'] },
-  z: true,
-  page: 1,
-  perPage: 20 
-}, (err, res) => console.log(JSON.stringify(res, null, 4)));
+    z: true,
+    page: 1,
+    perPage: 50 
+  }, (err, res) => console.log(JSON.stringify(res, null, 4)));
 ```
 Then, run `node test.js`
 
@@ -43,15 +43,19 @@ file change.
 
 Run `npm run demo` to start the interactive demo.
 The demo currently supports only the `getMatchesForString()` function.
-This command automatically opens a browser page with 4 input-fields to
-search on BioPortal ontology data. The 4 inputs fields represent:
-+ The string to search results for
-+ The dictionary abbreviations (e.g. GO,MCCL), comma separated, that 
+This command automatically opens a browser page with 6 input-fields to
+search on BioPortal ontology data. The 6 inputs fields represent:
+1. The string to search results for
+2. The dictionary abbreviations (e.g. GO,MCCL), comma separated, that 
 will be used as arguments for filtering the results
-+ The preferred dictionary abbreviations, comma separated, that 
+3. The preferred dictionary abbreviations, comma separated, that 
 will be used as arguments for sorting the results
-+ The z-object's properties to be kept in the result (if left empty, 
-all properties will be shown).
+4. The z-object's properties to be kept in the result (if left empty, 
+all properties will be shown)
+5. The page number - note that only for `page=1` there is a possibility
+of sorting the results taking into account the preferred dictionaries
+6. The page size returned, which is the maximum number of returned 
+terms/results in the demo.
 
 The demo works by making a Webpack dev-server bundle all source code 
 and serve it to the browser.
@@ -67,12 +71,16 @@ and the corresponding VSM objects.
 
 - `getEntryMatchesForString(str, options, cb)`
 
-An example of the URL string that is prepared and send to BioPortal is:
+An example of a URL string that is being built and send to BioPortal is:
 
-`http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL,CHEAR&page=1&pagesize=40&display_context=false`
+`http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL&page=1&pagesize=50&display_context=false`
 
-The `ontologies` map to the `options.filter.dictID`, `page` to `options.page`
-and `pagesize` to `options.perPage`. All these are optional URL parameters. 
+The `ontologies` part of the URL corresponds to the sub-dictionaries from 
+where we want to get terms, `page` is the `options.page` and `pagesize` 
+is `options.perPage`. All these are optional URL parameters, meaning that if
+for example the `options` object is empty, then the default BioPortal API 
+values will be used instead for `page` (1) and `pagesize` (50), while the search
+will be done on all sub-dictionaries available at BioPortal's repository. 
 The search string is obligatory though (if you want to get non-empty results :) 
 and the `display_context=false` is always added since it does not provide any
 useful data to be mapped to VSM objects.
