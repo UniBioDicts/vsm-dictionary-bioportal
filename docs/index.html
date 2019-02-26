@@ -1,0 +1,377 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <title>README · GitBook</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.1.1">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter active" data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    README
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >README</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="vsm-dictionary-bioportal">vsm-dictionary-bioportal</h1>
+<h2 id="summary">Summary</h2>
+<p><code>vsm-dictionary-bioportal</code> is an implementation 
+of the &apos;VsmDictionary&apos; parent-class/interface (from the package
+<a href="https://github.com/vsmjs/vsm-dictionary" target="_blank"><code>vsm-dictionary</code></a>), that
+communicates with <a href="https://bioportal.bioontology.org/" target="_blank">BioPortal&apos;s</a> 
+REST API and translates the provided terms+IDs into a VSM-specific format.</p>
+<h2 id="example-use">Example use</h2>
+<p>You first need to have a BioPortal account to use this dictionary. Once you 
+have an account, you will be given an API key to authorise your access to 
+the provided REST API&apos;s resources. Then, you can create a <code>test.js</code> file and
+include this code:</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">var</span> DictionaryBioPortal = <span class="hljs-built_in">require</span>(<span class="hljs-string">&apos;./DictionaryBioPortal&apos;</span>);
+<span class="hljs-keyword">var</span> apiKey = <span class="hljs-string">&apos;a-valid-API-key-string&apos;</span>;
+<span class="hljs-keyword">var</span> dict = <span class="hljs-keyword">new</span> DictionaryBioPortal({apiKey: apiKey});
+dict.getMatchesForString(<span class="hljs-string">&apos;melanoma&apos;</span>, 
+  { filter: { dictID : [
+      <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MESH&apos;</span>,
+      <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MCCL&apos;</span>,
+      <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span> 
+    ]},
+    sort: { dictID : [<span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>] },
+    z: <span class="hljs-literal">true</span>,
+    page: <span class="hljs-number">1</span>,
+    perPage: <span class="hljs-number">50</span> 
+  }, (err, res) =&gt; <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(res, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>)));
+</code></pre>
+<p>Then, run <code>node test.js</code></p>
+<h2 id="tests">Tests</h2>
+<p>Run <code>npm test</code>, which runs tests with Mocha.<br>Run <code>npm run testw</code>, which automatically reruns tests on any
+file change.</p>
+<h2 id="browser-demo">Browser Demo</h2>
+<p>Run <code>npm run demo</code> to start the interactive demo.
+The demo currently supports only the <code>getMatchesForString()</code> function.
+This command automatically opens a browser page with 6 input-fields to
+search on BioPortal ontology data. The 6 inputs fields represent:</p>
+<ol>
+<li>The string to search results for</li>
+<li>The dictionary abbreviations (e.g. GO,MCCL), comma separated, that 
+will be used as arguments for filtering the results</li>
+<li>The preferred dictionary abbreviations, comma separated, that 
+will be used as arguments for sorting the results</li>
+<li>The z-object&apos;s properties to be kept in the result (if left empty, 
+all properties will be shown)</li>
+<li>The page number - note that only for <code>page=1</code> there is a possibility
+of sorting the results taking into account the preferred dictionaries</li>
+<li>The page size returned, which is the maximum number of returned 
+terms/results in the demo.</li>
+</ol>
+<p>The demo works by making a Webpack dev-server bundle all source code 
+and serve it to the browser.</p>
+<h2 id="build-configuration--demo">&apos;Build&apos; configuration &amp; demo</h2>
+<p>To use a VsmDictionary in Node.js, one can simply run <code>npm install</code> and then
+use <code>require()</code>. But it is also convenient to have a version of the code that
+can just be loaded via a &lt;script&gt;-tag in the browser.</p>
+<p>Therefore, we included <code>webpack.config.js</code> (note: the one in the root folder, 
+<em>not</em> the one in the &apos;demo&apos; folder), which is a Webpack configuration file for 
+generating such a browser-ready package.</p>
+<p>By running <code>npm build</code>, the built file will appear in a &apos;dist&apos; subfolder. 
+A demo-use of this file can then be seen by opening <code>demo-build.html</code> 
+(in the &apos;demo&apos; folder). (It includes a 
+<code>&lt;script src=&quot;../dist/vsm-dictionary-bioportal.min.js&quot;&gt;&lt;/script&gt;</code> tag). 
+So after the build step, <code>demo-build.html</code> does not need Webpack to run.</p>
+<h2 id="specification">Specification</h2>
+<p>Like all VsmDictionary subclass implementations, this package follows
+the parent class
+<a href="https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md" target="_blank">specification</a>.
+Next, we will explain the mapping between BioPortal&apos;s API 
+results (as specified in the <a href="http://data.bioontology.org/documentation" target="_blank">API documentation</a>)
+and the corresponding VSM objects.</p>
+<ul>
+<li><code>getEntryMatchesForString(str, options, cb)</code></li>
+</ul>
+<p>An example of a URL string that is being built and send to BioPortal is:</p>
+<p><code>http://data.bioontology.org/search?q=melanoma&amp;ontologies=RH-MESH,MCCL&amp;page=1&amp;pagesize=50&amp;display_context=false</code></p>
+<p>The <code>ontologies</code> part of the URL corresponds to the sub-dictionaries from 
+where we want to get terms, <code>page</code> is the <code>options.page</code> and <code>pagesize</code> 
+is <code>options.perPage</code>. All these are optional URL parameters, meaning that if
+for example the <code>options</code> object is empty, then the default BioPortal API 
+values will be used instead for <code>page</code> (1) and <code>pagesize</code> (50), while the search
+will be done on all sub-dictionaries available at BioPortal&apos;s repository. 
+The search string is obligatory though (if you want to get non-empty results :) 
+and the <code>display_context=false</code> is always added since it does not provide any
+useful data to be mapped to VSM objects.</p>
+<p>After hitting such a query, the result JSON object includes a <code>collection</code> 
+property which has as a value, an array of objects. Each object/element of 
+that array is an entry which is mapped to a VSM match-object. The mapping is
+fully detailed in the table below:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">BioPortal entry&apos;s property</th>
+<th style="text-align:center">Type</th>
+<th style="text-align:center">Required</th>
+<th style="text-align:center">VSM match-object property</th>
+<th>Notes  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>@id</code></td>
+<td style="text-align:center">URL</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>id</code></td>
+<td>the concept-ID</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>links.ontology</code></td>
+<td style="text-align:center">URL</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>dictID</code></td>
+<td>the unique identifier of the ontology </td>
+</tr>
+<tr>
+<td style="text-align:center"><code>prefLabel</code></td>
+<td style="text-align:center">String</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>str</code></td>
+<td>the string representation of the term</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>definition</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>descr</code></td>
+<td>we map the first definition only</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>synonym</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>terms.str</code></td>
+<td>we map the whole array</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>links.ontology</code></td>
+<td style="text-align:center">URL</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>z.dictAbbrev</code></td>
+<td>the (unique) ontology abbreviation</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>cui</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>z.cui</code></td>
+<td>Concept Unique Identifier</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>semanticType</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>z.tui</code></td>
+<td>Type Unique Identifier</td>
+</tr>
+</tbody>
+</table>
+<h2 id="documentation">Documentation</h2>
+<p>You can view this <em>README</em> in gitbook format 
+<a href="https://vsmjs.github.io/vsm-dictionary-bioportal/" target="_blank">here</a>.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-02-26T17:04:30.351Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-02-26T17:04:34.788Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

@@ -1,6 +1,9 @@
-node_modules/
-package*
-resources/
+docs/
 demo/
+resources/
 src/
-test.js
+.bookignore
+gulpfile.js
+webpack.config.js
+bioPortal-API.test.js
+package*

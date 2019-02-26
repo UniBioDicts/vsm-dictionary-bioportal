@@ -60,6 +60,22 @@ terms/results in the demo.
 The demo works by making a Webpack dev-server bundle all source code 
 and serve it to the browser.
 
+## 'Build' configuration & demo
+
+To use a VsmDictionary in Node.js, one can simply run `npm install` and then
+use `require()`. But it is also convenient to have a version of the code that
+can just be loaded via a &lt;script&gt;-tag in the browser.
+
+Therefore, we included `webpack.config.js` (note: the one in the root folder, 
+_not_ the one in the 'demo' folder), which is a Webpack configuration file for 
+generating such a browser-ready package.
+
+By running `npm build`, the built file will appear in a 'dist' subfolder. 
+A demo-use of this file can then be seen by opening `demo-build.html` 
+(in the 'demo' folder). (It includes a 
+`<script src="../dist/vsm-dictionary-bioportal.min.js"></script>` tag). 
+So after the build step, `demo-build.html` does not need Webpack to run.
+
 ## Specification
 
 Like all VsmDictionary subclass implementations, this package follows
@@ -103,7 +119,5 @@ BioPortal entry's property | Type | Required | VSM match-object property | Notes
 
 ## Documentation
 
-To see this *README.md* in a nice-looking web-page:  
-install 'gitbook' with: `npm install gitbook-cli -g`,  
-run: `gitbook serve`,  
-and browse to [http://localhost:4000](http://localhost:4000).
+You can view this *README* in gitbook format 
+[here](https://vsmjs.github.io/vsm-dictionary-bioportal/).
