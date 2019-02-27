@@ -7,38 +7,31 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     super(opt);
 
     var baseUrl = opt.baseUrl || 'http://data.bioontology.org';
+
     // an API key must provided to get data from BioPortal
     this.key = opt.apiKey || {};
+
     // no context-related info is needed for matching to VSM terms
-    this.noContextField = '&display_context=false';
+    this.noContextField = 'display_context=false';
+    this.bioPortalDefaultPageSize = 50;
 
-    /*this.urlGetDictInfos = opt.urlGetDictInfos ||
-			baseUrl + '/dic?id=$filterID&name=$filterName&sort=$sort' + pp;
-	this.urlGetEntries   = opt.urlGetEntries   ||
-			baseUrl + '/ent?id=$filterID&dictID=$filterDictID&z=$z&sort=$sort'+ pp;*/
-
-    this.urlGetMatches   = opt.urlGetMatches   ||
-			baseUrl + '/search?q=$queryString';
+    this.urlGetDictInfos = opt.urlGetDictInfos || baseUrl + '/ontologies/';
+    this.urlGetEntries = opt.urlGetEntries;
+    this.urlGetMatches = opt.urlGetMatches || baseUrl + '/search?q=$queryString';
   }
 
-  /*getDictInfos(options, cb) {
-    var o = this._prepGetOptions(options, ['id', 'name']);
-    var url = this.urlGetDictInfos
-      .replace('$filterID'  , o.filter.id  .join(','));
-    this.request(url, (err, arr) => cb(err, { items: arr }));
-  }*/
+  getDictInfos(options, cb) {
+    return cb();
+  }
 
-  /*getEntries(options, cb) {
-    var o = this._prepGetOptions(options, ['id', 'dictID']);
-    var url = this.urlGetEntries
-      .replace('$filterID'    , o.filter.id    .join(','));
-    this.request(url, (err, arr) => cb(err, { items: arr }));
-  }*/
+  getEntries(options, cb) {
+    return cb();
+  }
 
   getEntryMatchesForString(str, options, cb) {
     if (!str) return cb(null, { items: [] });
 
-    var urlArray = this.buildURLs(str, options);
+    var urlArray = this.buildMatchURLs(str, options);
     var callsRemaining = urlArray.length;
     var urlToResultsMap = new Map();
 
@@ -48,12 +41,12 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
       this.request(url, (err, res) => {
         if (err) return cb(err);
-        urlToResultsMap.set(url, this.processBioPortalResponse(res, str));
+        urlToResultsMap.set(url, this.mapBioPortalResToMatchObj(res, str));
 
         --callsRemaining;
         /** all calls have returned, so prune, sort and trim results */
         if (callsRemaining <= 0) {
-          urlToResultsMap = this.pruneCommonResults(urlToResultsMap);
+          urlToResultsMap = this.pruneCommonResultsById(urlToResultsMap);
 
           var arr = [];
           for (var matchObjArray of urlToResultsMap.values()) {
@@ -65,7 +58,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           if (this.hasProperPerPageProperty(options)) {
             arr = arr.splice(0, options.perPage);
           } else {
-            arr = arr.splice(0, 50); // BioPortal's API default pagesize value
+            arr = arr.splice(0, this.bioPortalDefaultPageSize);
           }
 
           cb(err, { items: arr });
@@ -74,27 +67,36 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }
   }
 
-  buildURLs(str, options) {
+  buildOntologySearchURLs(options) {
+    if (this.hasProperFilterIDProperty(options)) {
+      return options.filter.id.map(dictid =>
+        this.prepareOntologySearchURL(this.getDictIDAcronym(dictid)));
+    } else return [this.prepareOntologySearchURL()];
+  }
+
+  buildMatchURLs(str, options) {
     var obj = this.splitDicts(options);
-    var pref = this.getDictAbbrev(obj.pref);
-    var rest = this.getDictAbbrev(obj.rest);
+    var pref = this.getDictAcronymsFromArray(obj.pref);
+    var rest = this.getDictAcronymsFromArray(obj.rest);
 
     if (pref.length === 0 && rest.length === 0)
-      return [this.prepareURLString(str, options, [])];
+      return [this.prepareMatchStringSearchURL(str, options, [])];
     else if (pref.length === 0 && rest.length !== 0)
-      return [this.prepareURLString(str, options, rest)];
+      return [this.prepareMatchStringSearchURL(str, options, rest)];
     else if (pref.length !== 0 && rest.length === 0) {
       if (!options.hasOwnProperty('page') ||
         this.hasPagePropertyEqualToOne(options))
-        return [this.prepareURLString(str, options, pref)].
-          concat([this.prepareURLString(str, options, [])]);
-      else return [this.prepareURLString(str, options, [])];
+        return [this.prepareMatchStringSearchURL(str, options, pref)].
+          concat([this.prepareMatchStringSearchURL(str, options, [])]);
+      else return [this.prepareMatchStringSearchURL(str, options, [])];
     } else if (pref.length !== 0 && rest.length !== 0) {
       if (!options.hasOwnProperty('page') ||
         this.hasPagePropertyEqualToOne(options))
-        return [this.prepareURLString(str, options, pref)].
-          concat([this.prepareURLString(str, options, rest)]);
-      else return [this.prepareURLString(str, options, pref.concat(rest))];
+        return [this.prepareMatchStringSearchURL(str, options, pref)].
+          concat([this.prepareMatchStringSearchURL(str, options, rest)]);
+      else return [
+        this.prepareMatchStringSearchURL(str, options, pref.concat(rest))
+      ];
     }
   }
 
@@ -132,12 +134,26 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     });
   }
 
-  getDictAbbrev(arr) {
+  getDictAcronymsFromArray(arr) {
     if (arr.length === 0) return arr;
-    return arr.map(dictid => dictid.split('/').pop());
+    return arr.map(dictid => this.getDictIDAcronym(dictid));
   }
 
-  prepareURLString(str, options, ontologiesArray) {
+  getDictIDAcronym(dictid) {
+    return dictid.split('/').pop();
+  }
+
+  prepareOntologySearchURL(ontologyAcronym) {
+    var url = this.urlGetDictInfos;
+
+    if (ontologyAcronym)
+      url += ontologyAcronym;
+
+    url += '?' + this.noContextField;
+    return url;
+  }
+
+  prepareMatchStringSearchURL(str, options, ontologiesArray) {
     var url = this.urlGetMatches
       .replace('$queryString', encodeURIComponent(str));
 
@@ -154,26 +170,39 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       url += '&pagesize=' + NumOfResultsPerPage;
     }
 
-    url += this.noContextField;
+    url += '&' + this.noContextField;
     return url;
   }
 
-  processBioPortalResponse(res, str) {
+  mapBioPortalResToDictInfoObj(res) {
+    if (Array.isArray(res)) {
+      // case of all ontologies in BioPortal
+      return res.map(entry => ({
+        id: entry['@id'],
+        abbrev: entry.acronym,
+        name: entry.name
+      }));
+    } else {
+      // case of a specific ontology
+      return [
+        {
+          id: res['@id'],
+          abbrev: res.acronym,
+          name: res.name
+        }
+      ];
+    }
+  }
+
+  mapBioPortalResToEntryObj(res) {
     return res.collection.map(entry => ({
       id: entry['@id'],
       dictID: entry.links.ontology,
-      str: entry.prefLabel,
       ...((entry.definition !== undefined) &&
         {
           descr: entry.definition[0] // take just the first definition
         }),
-      type: entry.prefLabel.startsWith(str) ? 'S' : 'T',
-      ...((entry.synonym !== undefined) &&
-        {
-          terms: entry.synonym.map(syn => ({
-            str: syn
-          }))
-        }),
+      terms: this.getTerms(entry.prefLabel, entry.synonym),
       z: {
         dictAbbrev: entry.links.ontology.split('/').pop(),
         ...((entry.cui !== undefined) &&
@@ -188,10 +217,50 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }));
   }
 
+  mapBioPortalResToMatchObj(res, str) {
+    return res.collection.map(entry => ({
+      id: entry['@id'],
+      dictID: entry.links.ontology,
+      str: entry.prefLabel,
+      ...((entry.definition !== undefined) &&
+        {
+          descr: entry.definition[0] // take just the first definition
+        }),
+      type: entry.prefLabel.startsWith(str) ? 'S' : 'T',
+      terms: this.getTerms(entry.prefLabel, entry.synonym),
+      z: {
+        dictAbbrev: entry.links.ontology.split('/').pop(),
+        ...((entry.cui !== undefined) &&
+          {
+            cui: entry.cui // Concept Unique Identifiers
+          }),
+        ...((entry.semanticType !== undefined) &&
+          {
+            tui: entry.semanticType // Type Unique Identifiers
+          })
+      }
+    }));
+  }
+
+  getTerms(mainTerm, synonyms) {
+    if (synonyms === undefined)
+      return [{ str: mainTerm }];
+    else {
+      var terms = [{ str: mainTerm }];
+      for (let synonym of synonyms) {
+        if (synonym !== mainTerm) {
+          terms.push({ str: synonym });
+        }
+      }
+      return terms;
+    }
+  }
+
   request(url, cb) {
     var req = this.getReqObj();
     req.onreadystatechange = function () {
       if (req.readyState === 4) {
+        // TODO SEND PROPER ERROR FORMAT
         if (req.status !== 200)  cb('Error: req.status = ' + req.status);
         else {
           try {
@@ -221,13 +290,13 @@ module.exports = class DictionaryBioPortal extends Dictionary {
    *  the rest (2nd URL). Such cases may have common results
    *  which we prune (pruning is done based on common `id` property)
    */
-  pruneCommonResults(urlToResultsMap) {
-    if (urlToResultsMap.size === 2) {
-      var urls = Array.from(urlToResultsMap.keys());
+  pruneCommonResultsById(map) {
+    if (map.size === 2) {
+      var urls = Array.from(map.keys());
       var firstURL = urls[0];
       var secondURL = urls[1];
-      var matchObjArray1 = urlToResultsMap.get(firstURL);
-      var matchObjArray2 = urlToResultsMap.get(secondURL);
+      var matchObjArray1 = map.get(firstURL);
+      var matchObjArray2 = map.get(secondURL);
       var ids1 = this.getIDsFromMatchObjArray(matchObjArray1);
 
       matchObjArray2 = matchObjArray2.filter(matchObj => {
@@ -235,9 +304,9 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           return matchObj;
         } //else console.log('Prune: ' + matchObj.id);
       });
-      urlToResultsMap.set(secondURL, matchObjArray2);
+      map.set(secondURL, matchObjArray2);
     }
-    return urlToResultsMap;
+    return map;
   }
 
   extractOntologiesFromURL(url) {
@@ -253,6 +322,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }, []);
   }
 
+  // TODO recursively remove this and tests
   sortMatches(arr, options) {
     if (this.hasProperSortDictIDProperty(options))
       return this.sortWithPreferredDict(arr, options);
@@ -263,12 +333,21 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   hasProperFilterDictIDProperty(options) {
     return options.hasOwnProperty('filter') &&
       options.filter.hasOwnProperty('dictID') &&
+      Array.isArray(options.filter.dictID) &&
       options.filter.dictID.length !== 0;
+  }
+
+  hasProperFilterIDProperty(options) {
+    return options.hasOwnProperty('filter') &&
+      options.filter.hasOwnProperty('id') &&
+      Array.isArray(options.filter.id) &&
+      options.filter.id.length !== 0;
   }
 
   hasProperSortDictIDProperty(options) {
     return options.hasOwnProperty('sort') &&
       options.sort.hasOwnProperty('dictID') &&
+      Array.isArray(options.sort.dictID) &&
       options.sort.dictID.length !== 0;
   }
 
@@ -322,5 +401,4 @@ module.exports = class DictionaryBioPortal extends Dictionary {
         !arrayDictIds.includes(a.dictID) &&
         arrayDictIds.includes(b.dictID) ? 1 : 0);
   }
-
 };
