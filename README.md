@@ -85,6 +85,33 @@ and the corresponding VSM objects.
 
 ### Map BioPortal to DictInfo VSM object
 
+This specification relates to the function:  
+ `getDictInfos(options, cb)`
+
+An example of a URL string that is being built and send to BioPortal is:
+```
+http://data.bioontology.org/ontologies/GO?display_context=false
+```
+If `options.filter.id` is empty or not properly defined, then we query all 
+BioPortal's ontologies with:
+```
+http://data.bioontology.org/ontologies/?display_context=false
+```
+
+The `options.page` and `options.perPage` are used after the results are 
+returned to filter/prune their number (if they are present). If these options
+are missing you get all results unpruned.
+
+After sending a query to ask for information about a specific ontology, the 
+returned JSON result is mapped to a VSM dictInfo object. The mapping is fully 
+detailed in the table below:
+
+BioPortal ontology property | Type | Required | VSM dictInfo object property | Notes  
+:---:|:---:|:---:|:---:|---
+`@id` | URL | **YES** | `id` | the unique ontology URI
+`acronym` | String | **YES** | `abbrev` | the unique ontology acronym
+`name` | String | **YES** | `name` | the full name of the ontology
+
 ### Map BioPortal to Entry VSM object
 
 ### Map BioPortal to Match VSM object
@@ -116,7 +143,6 @@ repository (the `ontologies=` part of the URL will be pruned):
 ```
 http://data.bioontology.org/search?q=melanoma&display_context=false
 ```
-
 
 The search string is obligatory though (if you want to get non-empty results :) 
 and the `display_context=false` is always added since it does not provide any
