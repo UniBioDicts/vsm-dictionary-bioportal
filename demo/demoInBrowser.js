@@ -228,7 +228,11 @@ function getNewMatches(dict, str, options, stringInput,
 
   //console.log(options);
   dict.getMatchesForString(str, options, function (err, res) {
-    if (err)  { output.innerHTML = err;  return }
+    if (err)  {
+      output.innerHTML = JSON.stringify(err, null, 4);
+      return;
+    }
+
     for (var i = 0, s = '';  i < res.items.length;  i++) {
       s += matchToString(res.items[i]) + '\n';
     }
@@ -248,7 +252,7 @@ function getNewMatches(dict, str, options, stringInput,
       //output.innerHTML = JSON.stringify(res, null, 4);
       output.innerHTML = s;
     } else console.log('Inputs have changed, so no new output');
-    
+
   });
 }
 

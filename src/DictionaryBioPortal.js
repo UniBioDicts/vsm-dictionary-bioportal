@@ -268,8 +268,8 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     var req = this.getReqObj();
     req.onreadystatechange = function () {
       if (req.readyState === 4) {
-        // TODO SEND PROPER ERROR FORMAT
-        if (req.status !== 200)  cb('Error: req.status = ' + req.status);
+        if (req.status !== 200)
+          cb(JSON.parse(req.responseText));
         else {
           try {
             var response = JSON.parse(req.responseText);

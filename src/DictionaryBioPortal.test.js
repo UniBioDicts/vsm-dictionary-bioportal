@@ -8,35 +8,44 @@ const path = require('path');
 
 describe('DictionaryBioPortal.js', () => {
 
-  var apiKey = 'testAPIKey';
-  var testURLBase = 'http://test';
-  var dictNoApiKey = new DictionaryBioPortal({baseUrl: testURLBase});
-  var dict = new DictionaryBioPortal({baseUrl: testURLBase, apiKey: apiKey});
-  var noContext = '&display_context=false';
-  var melanomaStr = 'melanoma';
-  var noResultsStr = 'somethingThatDoesNotExist';
-  var numberStr = '5';
-  var refStr = 'it';
+  const apiKey = 'testAPIKey';
+  const testURLBase = 'http://test';
+  const dictNoApiKey = new DictionaryBioPortal({baseUrl: testURLBase});
+  const dict = new DictionaryBioPortal({baseUrl: testURLBase, apiKey: apiKey});
+  const noContext = '&display_context=false';
+  const melanomaStr = 'melanoma';
+  const searchStr = '/search?q=';
+  const noResultsStr = 'somethingThatDoesNotExist';
+  const numberStr = '5';
+  const refStr = 'it';
 
-  var melanomaURL = '/search?q=' + melanomaStr + noContext;
-  var melanomaURLWithFilteredDicts = '/search?q=' + melanomaStr +
+  const melanomaURL = searchStr + melanomaStr + noContext;
+  const melanomaURLWithFilteredDicts = searchStr + melanomaStr +
     '&ontologies=RADLEX,MCCL,VO' + noContext;
-  var searchNumUrl = '/search?q=' + numberStr + noContext;
-  var searchRefUrl = '/search?q=' + refStr + noContext;
-  var noResultsUrl = '/search?q=' + noResultsStr + noContext;
+  const searchNumURL = searchStr + numberStr + noContext;
+  const searchRefURL = searchStr + refStr + noContext;
+  const noResultsURL = searchStr + noResultsStr + noContext;
+  const errorQuery1URL = '/search?q=a&ontologies=NonValidAcronym' + noContext;
+  const errorQuery2URL = '/ontologies/nonValidAcronym' + noContext;
 
-  var jsonMelanoma5resultsPath = path.join(__dirname, '..',
+  const jsonMelanoma5resultsPath = path.join(__dirname, '..',
     'resources', 'query_melanoma_5_results.json');
-  var jsonMelanoma3resultsPath = path.join(__dirname, '..',
+  const jsonMelanoma3resultsPath = path.join(__dirname, '..',
     'resources', 'query_melanoma_3_results.json');
-  var jsonMelanoma1resultPath = path.join(__dirname, '..',
+  const jsonMelanoma1resultPath = path.join(__dirname, '..',
     'resources', 'query_melanoma_1_result.json');
-  var jsonNoResultsPath = path.join(__dirname, '..',
+  const jsonNoResultsPath = path.join(__dirname, '..',
     'resources', 'query_no_results.json');
-  var jsonGOontologyInfoPath = path.join(__dirname, '..',
+  const jsonGOontologyInfoPath = path.join(__dirname, '..',
     'resources', 'query_go_ontology.json');
-  var json3ontologiesInfoPath = path.join(__dirname, '..',
+  const json3ontologiesInfoPath = path.join(__dirname, '..',
     'resources', 'query_all_ontologies_pruned.json');
+  const jsonNotValidAPIkeyPath = path.join(__dirname, '..',
+    'resources', 'not_valid_api_key_error.json');
+  const jsonError1Path = path.join(__dirname, '..',
+    'resources', 'error1.json');
+  const jsonError2Path = path.join(__dirname, '..',
+    'resources', 'error2.json');
 
   const melanoma5resultsJSONString =
     fs.readFileSync(jsonMelanoma5resultsPath, 'utf8');
@@ -48,10 +57,16 @@ describe('DictionaryBioPortal.js', () => {
     fs.readFileSync(jsonNoResultsPath, 'utf8');
   const goOntologyInfoJSONString =
     fs.readFileSync(jsonGOontologyInfoPath, 'utf8');
-  const ThreeOntologiesInfoJSONString =
+  const threeOntologiesInfoJSONString =
     fs.readFileSync(json3ontologiesInfoPath, 'utf8');
+  const notValidAPIkeyJSONString =
+    fs.readFileSync(jsonNotValidAPIkeyPath, 'utf8');
+  const error1JSONString =
+    fs.readFileSync(jsonError1Path, 'utf8');
+  const error2JSONString =
+    fs.readFileSync(jsonError2Path, 'utf8');
 
-  var matchObjArray = [
+  const matchObjArray = [
     {
       id: 'http://purl.obolibrary.org/obo/DOID_1909',
       dictID: 'http://data.bioontology.org/ontologies/CLO',
@@ -131,7 +146,7 @@ describe('DictionaryBioPortal.js', () => {
       }
     }
   ];
-  var matchObjArrayFilteredZPrunedAndSorted = [
+  const matchObjArrayFilteredZPrunedAndSorted = [
     {
       id: 'http://www.radlex.org/RID/#RID34617',
       dictID: 'http://data.bioontology.org/ontologies/RADLEX',
@@ -178,7 +193,7 @@ describe('DictionaryBioPortal.js', () => {
       ]
     }
   ];
-  var testMatchObjArray = [
+  const testMatchObjArray = [
     {
       id:     'id1',
       dictID: 'http://test/ontologies/A',
@@ -240,7 +255,7 @@ describe('DictionaryBioPortal.js', () => {
       }
     }
   ];
-  var testMatchObjArraySortedWithPrefDict = [
+  const testMatchObjArraySortedWithPrefDict = [
     {
       id: 'id5',
       dictID: 'http://test/ontologies/c',
@@ -302,7 +317,7 @@ describe('DictionaryBioPortal.js', () => {
       }
     }
   ];
-  var testMatchObjArraySortedWithoutPrefDict = [
+  const testMatchObjArraySortedWithoutPrefDict = [
     {
       id:     'id1',
       dictID: 'http://test/ontologies/A',
@@ -378,12 +393,53 @@ describe('DictionaryBioPortal.js', () => {
     nock.enableNetConnect();
   });
 
-  describe('getEntryMatchesForString()', () => {
+  describe('getDictInfos', () => {
+    it.skip('returns proper formatted error for non-valid ontology acronym', cb => {
+      nock(testURLBase).get(errorQuery2URL).
+        reply(404, error2JSONString);
+      dict.getDictInfos({ filter: { id : [
+        'http://data.bioontology.org/ontologies/NonValidAcronym'
+      ]}},(err, res) => {
+        err.should.deep.equal({
+          errors: [
+            'You must provide a valid `acronym` to retrieve an ontology'
+          ],
+          status: 404
+        });
+        assert.typeOf(res, 'undefined');
+        cb();
+      });
+    });
+
+  });
+
+  describe('getEntryMatchesForString', () => {
     it('calls its URL, with no apiKey given as an option', cb => {
       nock(testURLBase).get(melanomaURL).
-        reply(401, undefined);
+        reply(401, notValidAPIkeyJSONString);
       dictNoApiKey.getEntryMatchesForString(melanomaStr, {}, (err, res) => {
-        expect(err).to.equal('Error: req.status = 401');
+        err.should.deep.equal({
+          status: 401,
+          error: 'You must provide a valid API Key. Your API Key can be obtained by logging in at bioportal.bioontology.org/account'
+        });
+        assert.typeOf(res, 'undefined');
+        cb();
+      });
+    });
+
+    it('returns proper formatted error for non-valid ontology acronym in search' +
+      'query', cb => {
+      nock(testURLBase).get(errorQuery1URL).
+        reply(404, error1JSONString);
+      dict.getEntryMatchesForString('a', { filter: { dictID : [
+        'http://data.bioontology.org/ontologies/NonValidAcronym'
+      ]}},(err, res) => {
+        err.should.deep.equal({
+          errors: [
+            'The ontologies parameter `[NonValidAcronym]` includes non-existent acronyms. Notice that acronyms are case sensitive.'
+          ],
+          status: 404
+        });
         assert.typeOf(res, 'undefined');
         cb();
       });
@@ -391,7 +447,7 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns empty array of match objects when the web server query ' +
       'does not return any result entry', cb => {
-      nock(testURLBase).get(noResultsUrl).
+      nock(testURLBase).get(noResultsURL).
         reply(200, melanomaNoResultsJSONString);
       dict.getEntryMatchesForString(noResultsStr, {}, (err, res) => {
         expect(err).to.equal(null);
@@ -481,11 +537,11 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('getMatchesForString()', () => {
+  describe('getMatchesForString', () => {
 
     it('lets the parent class add a number-string match', cb => {
       // we hypothesize the the server sends an empty results object
-      nock(testURLBase).get(searchNumUrl).reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(searchNumURL).reply(200, melanomaNoResultsJSONString);
       dict.getMatchesForString(numberStr, {}, (err, res) => {
         res.should.deep.equal(
           {
@@ -497,7 +553,7 @@ describe('DictionaryBioPortal.js', () => {
 
     it('lets the parent class add a default refTerm match', cb => {
       // we hypothesize the the server sends an empty results object
-      nock(testURLBase).get(searchRefUrl).reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(searchRefURL).reply(200, melanomaNoResultsJSONString);
       dict.getMatchesForString('it', {}, (err, res) => {
         res.should.deep.equal(
           {
@@ -770,7 +826,7 @@ describe('DictionaryBioPortal.js', () => {
         JSON.parse(goOntologyInfoJSONString)
       );
       var res2 = dict.mapBioPortalResToDictInfoObj(
-        JSON.parse(ThreeOntologiesInfoJSONString)
+        JSON.parse(threeOntologiesInfoJSONString)
       );
 
       var expectedResult1 = [
