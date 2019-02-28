@@ -17,6 +17,10 @@
     
             
                 
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-page-toc-optional/page-toc.css">
+                
+            
+                
                 <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
                 
             
@@ -172,8 +176,7 @@ dict.getMatchesForString(<span class="hljs-string">&apos;melanoma&apos;</span>,
 </code></pre>
 <p>Then, run <code>node test.js</code></p>
 <h2 id="tests">Tests</h2>
-<p>Run <code>npm test</code>, which runs tests with Mocha.<br>Run <code>npm run testw</code>, which automatically reruns tests on any
-file change.</p>
+<p>Run <code>npm test</code>, which runs tests with Mocha.</p>
 <h2 id="browser-demo">Browser Demo</h2>
 <p>Run <code>npm run demo</code> to start the interactive demo.
 The demo currently supports only the <code>getMatchesForString()</code> function.
@@ -213,31 +216,44 @@ the parent class
 Next, we will explain the mapping between BioPortal&apos;s API 
 results (as specified in the <a href="http://data.bioontology.org/documentation" target="_blank">API documentation</a>)
 and the corresponding VSM objects.</p>
-<ul>
-<li><code>getEntryMatchesForString(str, options, cb)</code></li>
-</ul>
+<h3 id="map-bioportal-to-dictinfo-vsm-object">Map BioPortal to DictInfo VSM object</h3>
+<h3 id="map-bioportal-to-entry-vsm-object">Map BioPortal to Entry VSM object</h3>
+<h3 id="map-bioportal-to-match-vsm-object">Map BioPortal to Match VSM object</h3>
+<p>This specification relates to the function:<br> <code>getEntryMatchesForString(str, options, cb)</code></p>
 <p>An example of a URL string that is being built and send to BioPortal is:</p>
-<p><code>http://data.bioontology.org/search?q=melanoma&amp;ontologies=RH-MESH,MCCL&amp;page=1&amp;pagesize=50&amp;display_context=false</code></p>
-<p>The <code>ontologies</code> part of the URL corresponds to the sub-dictionaries from 
-where we want to get terms, <code>page</code> is the <code>options.page</code> and <code>pagesize</code> 
-is <code>options.perPage</code>. All these are optional URL parameters, meaning that if
+<pre><code>http://data.bioontology.org/search?q=melanoma&amp;ontologies=RH-MESH,MCCL&amp;page=1&amp;pagesize=40&amp;display_context=false
+</code></pre><p>The parameters are as follows:</p>
+<ul>
+<li><code>str</code> maps to <code>q=str</code></li>
+<li><code>page</code> is the <code>options.page</code> and <code>pagesize</code> is <code>options.perPage</code></li>
+<li>The <code>ontologies</code> part of the URL corresponds to the sub-dictionaries from 
+where we want to get terms. This parameter is being built according to the 
+values of <code>options.filter.dictID</code> and <code>options.sort.dictID</code> as well as the
+<a href="https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md" target="_blank">specification</a>
+of the vsm-dictionary parent class. Note that there can be cases where 2 URLs
+are fired (simultaneously) during a string search to get results for preferred
+dictionaries and all the rest for example.</li>
+</ul>
+<p>All the above are optional URL parameters, meaning that if
 for example the <code>options</code> object is empty, then the default BioPortal API 
-values will be used instead for <code>page</code> (1) and <code>pagesize</code> (50), while the search
-will be done on all sub-dictionaries available at BioPortal&apos;s repository. 
-The search string is obligatory though (if you want to get non-empty results :) 
+values will be used instead for <code>page</code> and <code>pagesize</code> (1 and 50 respectively), 
+while the search will be done on all ontologies available at BioPortal&apos;s 
+repository (the <code>ontologies=</code> part of the URL will be pruned):  </p>
+<pre><code>http://data.bioontology.org/search?q=melanoma&amp;display_context=false
+</code></pre><p>The search string is obligatory though (if you want to get non-empty results :) 
 and the <code>display_context=false</code> is always added since it does not provide any
-useful data to be mapped to VSM objects.</p>
-<p>After hitting such a query, the result JSON object includes a <code>collection</code> 
-property which has as a value, an array of objects. Each object/element of 
-that array is an entry which is mapped to a VSM match-object. The mapping is
-fully detailed in the table below:</p>
+useful data to be mapped to a VSM match object.</p>
+<p>After sending such a query, the returned JSON result object includes a 
+<code>collection</code> property which has as a value, an array of objects. Each 
+object/element of that array is an entry which is mapped to a VSM match 
+object. The mapping is fully detailed in the table below:</p>
 <table>
 <thead>
 <tr>
 <th style="text-align:center">BioPortal entry&apos;s property</th>
 <th style="text-align:center">Type</th>
 <th style="text-align:center">Required</th>
-<th style="text-align:center">VSM match-object property</th>
+<th style="text-align:center">VSM match object property</th>
 <th>Notes  </th>
 </tr>
 </thead>
@@ -282,7 +298,7 @@ fully detailed in the table below:</p>
 <td style="text-align:center">URL</td>
 <td style="text-align:center"><strong>YES</strong></td>
 <td style="text-align:center"><code>z.dictAbbrev</code></td>
-<td>the (unique) ontology abbreviation</td>
+<td>the unique ontology acronym</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>cui</code></td>
@@ -338,7 +354,7 @@ fully detailed in the table below:</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-02-26T17:04:30.351Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-02-26T17:04:34.788Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":["page-toc-optional"],"pluginsConfig":{"page-toc-optional":{"position":"before-first","selector":".markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4","showByDefault":true},"search":{},"position":"top","lunr":{"maxIndexSize":1000000},"showByDefault":true,"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"selector":".markdown-section h1, .markdown-section h2, .markdown-section h3"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-02-28T10:43:07.411Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-02-28T10:48:15.214Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
@@ -346,6 +362,14 @@ fully detailed in the table below:</p>
         
     <script src="gitbook/gitbook.js"></script>
     <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-page-toc-optional/anchor-3.1.1.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-page-toc-optional/page-toc.js"></script>
+        
     
         
         <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>

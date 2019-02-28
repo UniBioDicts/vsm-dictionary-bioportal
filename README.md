@@ -35,9 +35,7 @@ Then, run `node test.js`
 
 ## Tests
 
-Run `npm test`, which runs tests with Mocha.  
-Run `npm run testw`, which automatically reruns tests on any
-file change.
+Run `npm test`, which runs tests with Mocha.
 
 ## Browser Demo 
 
@@ -85,35 +83,58 @@ Next, we will explain the mapping between BioPortal's API
 results (as specified in the [API documentation](http://data.bioontology.org/documentation))
 and the corresponding VSM objects.
 
-- `getEntryMatchesForString(str, options, cb)`
+### Map BioPortal to DictInfo VSM object
+
+### Map BioPortal to Entry VSM object
+
+### Map BioPortal to Match VSM object
+
+This specification relates to the function:  
+ `getEntryMatchesForString(str, options, cb)`
 
 An example of a URL string that is being built and send to BioPortal is:
+```
+http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL&page=1&pagesize=40&display_context=false
+```
 
-`http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL&page=1&pagesize=50&display_context=false`
-
-The `ontologies` part of the URL corresponds to the sub-dictionaries from 
-where we want to get terms, `page` is the `options.page` and `pagesize` 
-is `options.perPage`. All these are optional URL parameters, meaning that if
+The parameters are as follows:
+- `str` maps to `q=str`
+- `page` is the `options.page` and `pagesize` is `options.perPage`
+- The `ontologies` part of the URL corresponds to the sub-dictionaries from 
+where we want to get terms. This parameter is being built according to the 
+values of `options.filter.dictID` and `options.sort.dictID` as well as the
+[specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md)
+ of the vsm-dictionary parent class. Note that there can be cases where 2 URLs
+ are fired (simultaneously) during a string search to get results for preferred
+ dictionaries and all the rest for example.
+ 
+All the above are optional URL parameters, meaning that if
 for example the `options` object is empty, then the default BioPortal API 
-values will be used instead for `page` (1) and `pagesize` (50), while the search
-will be done on all sub-dictionaries available at BioPortal's repository. 
+values will be used instead for `page` and `pagesize` (1 and 50 respectively), 
+while the search will be done on all ontologies available at BioPortal's 
+repository (the `ontologies=` part of the URL will be pruned):  
+```
+http://data.bioontology.org/search?q=melanoma&display_context=false
+```
+
+
 The search string is obligatory though (if you want to get non-empty results :) 
 and the `display_context=false` is always added since it does not provide any
-useful data to be mapped to VSM objects.
+useful data to be mapped to a VSM match object.
 
-After hitting such a query, the result JSON object includes a `collection` 
-property which has as a value, an array of objects. Each object/element of 
-that array is an entry which is mapped to a VSM match-object. The mapping is
-fully detailed in the table below:
+After sending such a query, the returned JSON result object includes a 
+`collection` property which has as a value, an array of objects. Each 
+object/element of that array is an entry which is mapped to a VSM match 
+object. The mapping is fully detailed in the table below:
 
-BioPortal entry's property | Type | Required | VSM match-object property | Notes  
+BioPortal entry's property | Type | Required | VSM match object property | Notes  
 :---:|:---:|:---:|:---:|---
 `@id` | URL | **YES** | `id` | the concept-ID
 `links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology 
 `prefLabel` | String | **YES** | `str` | the string representation of the term
 `definition` | Array | NO | `descr` | we map the first definition only
 `synonym` | Array | NO | `terms.str` | we map the whole array
-`links.ontology` | URL | **YES** | `z.dictAbbrev` | the (unique) ontology abbreviation
+`links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
 `cui` | Array | NO | `z.cui` | Concept Unique Identifier
 `semanticType` | Array | NO | `z.tui` | Type Unique Identifier
 

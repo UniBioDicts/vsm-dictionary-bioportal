@@ -7,7 +7,6 @@
     "lint": "eslint src demo",
     "lint-fix": "eslint src --fix",
     "test": "mocha \"src/**/*.test.js\" --check-leaks",
-    "testw": "mocha \"src/**/*.test.js\" --check-leaks --watch",
     "start": "npm run demo",
     "demo": "webpack-dev-server --config demo/webpack.config.js",
     "build": "webpack --config webpack.config.js"
