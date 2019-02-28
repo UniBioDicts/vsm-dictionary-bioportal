@@ -508,7 +508,7 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('buildOntologySearchURLs', () => {
+  describe('buildDictInfoURLs', () => {
 
     it('returns one global URL if there is no proper filter.id array ' +
       'of dictIDs', cb => {
@@ -530,12 +530,12 @@ describe('DictionaryBioPortal.js', () => {
       };
       var options6 = {};
 
-      var res1 = dict.buildOntologySearchURLs(options1);
-      var res2 = dict.buildOntologySearchURLs(options2);
-      var res3 = dict.buildOntologySearchURLs(options3);
-      var res4 = dict.buildOntologySearchURLs(options4);
-      var res5 = dict.buildOntologySearchURLs(options5);
-      var res6 = dict.buildOntologySearchURLs(options6);
+      var res1 = dict.buildDictInfoURLs(options1);
+      var res2 = dict.buildDictInfoURLs(options2);
+      var res3 = dict.buildDictInfoURLs(options3);
+      var res4 = dict.buildDictInfoURLs(options4);
+      var res5 = dict.buildDictInfoURLs(options5);
+      var res6 = dict.buildDictInfoURLs(options6);
       var expectedResult = [testURLBase + '/ontologies/?display_context=false'];
 
       res1.should.deep.equal(expectedResult);
@@ -552,14 +552,14 @@ describe('DictionaryBioPortal.js', () => {
       'that were taken from the filter.id array ', cb => {
       var options = {
         filter: { id: [
-            'http://data.bioontology.org/ontologies/CLO',
-            'http://data.bioontology.org/ontologies/RH-MESH',
-            'http://data.bioontology.org/ontologies/MCCL'
-          ]},
+          'http://data.bioontology.org/ontologies/CLO',
+          'http://data.bioontology.org/ontologies/RH-MESH',
+          'http://data.bioontology.org/ontologies/MCCL'
+        ]},
         page: 2,
         perPage: 2
       };
-      var res = dict.buildOntologySearchURLs(options);
+      var res = dict.buildDictInfoURLs(options);
       var expectedResult = [
         testURLBase + '/ontologies/CLO?display_context=false',
         testURLBase + '/ontologies/RH-MESH?display_context=false',
@@ -1135,12 +1135,12 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('prepareOntologySearchURL', () => {
+  describe('prepareDictInfoSearchURL', () => {
 
     it('returns proper url when ontologyAcronym is not defined or ' +
       'an empty string', cb => {
-      var url1 = dict.prepareOntologySearchURL();
-      var url2 = dict.prepareOntologySearchURL('');
+      var url1 = dict.prepareDictInfoSearchURL();
+      var url2 = dict.prepareDictInfoSearchURL('');
       var expectedURL = testURLBase + '/ontologies/?display_context=false';
 
       url1.should.equal(expectedURL);
@@ -1149,7 +1149,7 @@ describe('DictionaryBioPortal.js', () => {
     });
 
     it('returns proper url when ontologyAcronym is a string', cb => {
-      var url = dict.prepareOntologySearchURL('GO');
+      var url = dict.prepareDictInfoSearchURL('GO');
       var expectedURL = testURLBase + '/ontologies/GO?display_context=false';
 
       url.should.equal(expectedURL);

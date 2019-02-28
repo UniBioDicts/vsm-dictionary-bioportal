@@ -67,11 +67,15 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }
   }
 
-  buildOntologySearchURLs(options) {
+  buildDictInfoURLs(options) {
     if (this.hasProperFilterIDProperty(options)) {
       return options.filter.id.map(dictid =>
-        this.prepareOntologySearchURL(this.getDictIDAcronym(dictid)));
-    } else return [this.prepareOntologySearchURL()];
+        this.prepareDictInfoSearchURL(this.getDictAcronym(dictid)));
+    } else return [this.prepareDictInfoSearchURL()];
+  }
+
+  buildEntryURLs(options) {
+    return 0;
   }
 
   buildMatchURLs(str, options) {
@@ -136,14 +140,14 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
   getDictAcronymsFromArray(arr) {
     if (arr.length === 0) return arr;
-    return arr.map(dictid => this.getDictIDAcronym(dictid));
+    return arr.map(dictid => this.getDictAcronym(dictid));
   }
 
-  getDictIDAcronym(dictid) {
+  getDictAcronym(dictid) {
     return dictid.split('/').pop();
   }
 
-  prepareOntologySearchURL(ontologyAcronym) {
+  prepareDictInfoSearchURL(ontologyAcronym) {
     var url = this.urlGetDictInfos;
 
     if (ontologyAcronym)
@@ -151,6 +155,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
     url += '?' + this.noContextField;
     return url;
+  }
+
+  prepareEntrySearchURL(options) {
+    return 0;
   }
 
   prepareMatchStringSearchURL(str, options, ontologiesArray) {
@@ -309,6 +317,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     return map;
   }
 
+  // TODO recursively remove this and tests
   extractOntologiesFromURL(url) {
     var regex = /&ontologies=(.*?)&/g;
     var res = regex.exec(url);
