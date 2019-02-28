@@ -606,7 +606,7 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns an array of URLs corresponding to the ontologies ' +
       'that were taken from the filter.id array ', cb => {
-      var options = {
+      var options1 = {
         filter: { id: [
           'http://data.bioontology.org/ontologies/CLO',
           'http://data.bioontology.org/ontologies/RH-MESH',
@@ -615,13 +615,25 @@ describe('DictionaryBioPortal.js', () => {
         page: 2,
         perPage: 2
       };
-      var res = dict.buildDictInfoURLs(options);
-      var expectedResult = [
+      var options2 = {
+        filter: { id: [
+            'http://data.bioontology.org/ontologies/GO',
+        ]}
+      };
+      var res1 = dict.buildDictInfoURLs(options1);
+      var res2 = dict.buildDictInfoURLs(options2);
+
+      var expectedResult1 = [
         testURLBase + '/ontologies/CLO?display_context=false',
         testURLBase + '/ontologies/RH-MESH?display_context=false',
         testURLBase + '/ontologies/MCCL?display_context=false'
       ];
-      res.should.deep.equal(expectedResult);
+      var expectedResult2 = [
+        testURLBase + '/ontologies/GO?display_context=false'
+      ];
+
+      res1.should.deep.equal(expectedResult1);
+      res2.should.deep.equal(expectedResult2);
       cb();
     });
 
