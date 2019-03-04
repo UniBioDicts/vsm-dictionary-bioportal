@@ -13,6 +13,7 @@ describe('DictionaryBioPortal.js', () => {
   const dictNoApiKey = new DictionaryBioPortal({baseUrl: testURLBase});
   const dict = new DictionaryBioPortal({baseUrl: testURLBase, apiKey: apiKey});
   const noContext = '&display_context=false';
+  const noContext2 = '?display_context=false';
   const melanomaStr = 'melanoma';
   const searchStr = '/search?q=';
   const noResultsStr = 'somethingThatDoesNotExist';
@@ -25,8 +26,9 @@ describe('DictionaryBioPortal.js', () => {
   const searchNumURL = searchStr + numberStr + noContext;
   const searchRefURL = searchStr + refStr + noContext;
   const noResultsURL = searchStr + noResultsStr + noContext;
-  const errorQuery1URL = '/search?q=a&ontologies=NonValidAcronym' + noContext;
-  const errorQuery2URL = '/ontologies/nonValidAcronym' + noContext;
+  const searchGOontologyURL = '/ontologies/GO' + noContext2;
+  const errorNonValidAcronymURL1 = '/search?q=a&ontologies=NonValidAcronym' + noContext;
+  const errorNonValidAcronymURL2 = '/ontologies/nonValidAcronym' + noContext2;
 
   const jsonMelanoma5resultsPath = path.join(__dirname, '..',
     'resources', 'query_melanoma_5_results.json');
@@ -43,9 +45,9 @@ describe('DictionaryBioPortal.js', () => {
   const jsonNotValidAPIkeyPath = path.join(__dirname, '..',
     'resources', 'not_valid_api_key_error.json');
   const jsonError1Path = path.join(__dirname, '..',
-    'resources', 'error1.json');
+    'resources', 'error_non_valid_acronym_1.json');
   const jsonError2Path = path.join(__dirname, '..',
-    'resources', 'error2.json');
+    'resources', 'error_non_valid_acronym_2.json');
 
   const melanoma5resultsJSONString =
     fs.readFileSync(jsonMelanoma5resultsPath, 'utf8');
@@ -61,9 +63,9 @@ describe('DictionaryBioPortal.js', () => {
     fs.readFileSync(json3ontologiesInfoPath, 'utf8');
   const notValidAPIkeyJSONString =
     fs.readFileSync(jsonNotValidAPIkeyPath, 'utf8');
-  const error1JSONString =
+  const errorNonValidAcronymURL1JSONString =
     fs.readFileSync(jsonError1Path, 'utf8');
-  const error2JSONString =
+  const errorNonValidAcronymURL2JSONString =
     fs.readFileSync(jsonError2Path, 'utf8');
 
   const matchObjArray = [
@@ -394,11 +396,11 @@ describe('DictionaryBioPortal.js', () => {
   });
 
   describe('getDictInfos', () => {
-    it.skip('returns proper formatted error for non-valid ontology acronym', cb => {
-      nock(testURLBase).get(errorQuery2URL).
-        reply(404, error2JSONString);
+    it('returns proper formatted error for non-valid ontology acronym', cb => {
+      nock(testURLBase).get(errorNonValidAcronymURL2)
+        .reply(404, errorNonValidAcronymURL2JSONString);
       dict.getDictInfos({ filter: { id : [
-        'http://data.bioontology.org/ontologies/NonValidAcronym'
+        'http://test/ontologies/nonValidAcronym'
       ]}},(err, res) => {
         err.should.deep.equal({
           errors: [
@@ -411,12 +413,31 @@ describe('DictionaryBioPortal.js', () => {
       });
     });
 
+    it('returns proper dictInfo object for the GO ontology', cb => {
+      nock(testURLBase).get(searchGOontologyURL)
+        .reply(200, goOntologyInfoJSONString);
+      dict.getDictInfos({ filter: { id : ['http://test/ontologies/GO']}},
+        (err, res) => {
+          expect(err).to.equal(null);
+          res.should.deep.equal(
+            { items: [
+              {
+                id:     'http://data.bioontology.org/ontologies/GO',
+                abbrev: 'GO',
+                name:   'Gene Ontology'
+              }
+            ]}
+          );
+          cb();
+        });
+    });
+
   });
 
   describe('getEntryMatchesForString', () => {
     it('calls its URL, with no apiKey given as an option', cb => {
-      nock(testURLBase).get(melanomaURL).
-        reply(401, notValidAPIkeyJSONString);
+      nock(testURLBase).get(melanomaURL)
+        .reply(401, notValidAPIkeyJSONString);
       dictNoApiKey.getEntryMatchesForString(melanomaStr, {}, (err, res) => {
         err.should.deep.equal({
           status: 401,
@@ -429,10 +450,10 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns proper formatted error for non-valid ontology acronym in search' +
       'query', cb => {
-      nock(testURLBase).get(errorQuery1URL).
-        reply(404, error1JSONString);
+      nock(testURLBase).get(errorNonValidAcronymURL1)
+        .reply(404, errorNonValidAcronymURL1JSONString);
       dict.getEntryMatchesForString('a', { filter: { dictID : [
-        'http://data.bioontology.org/ontologies/NonValidAcronym'
+        'http://test/ontologies/NonValidAcronym'
       ]}},(err, res) => {
         err.should.deep.equal({
           errors: [
@@ -447,8 +468,8 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns empty array of match objects when the web server query ' +
       'does not return any result entry', cb => {
-      nock(testURLBase).get(noResultsURL).
-        reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(noResultsURL)
+        .reply(200, melanomaNoResultsJSONString);
       dict.getEntryMatchesForString(noResultsStr, {}, (err, res) => {
         expect(err).to.equal(null);
         res.should.deep.equal({ items: [] });
@@ -467,8 +488,8 @@ describe('DictionaryBioPortal.js', () => {
 
     it('calls its URL, with a test url+apiKey ' +
         'and returns proper vsm match objects', cb => {
-      nock(testURLBase).get(melanomaURL).
-        reply(200, melanoma5resultsJSONString);
+      nock(testURLBase).get(melanomaURL)
+        .reply(200, melanoma5resultsJSONString);
       dict.getEntryMatchesForString(melanomaStr, {}, (err, res) => {
         expect(err).to.equal(null);
         res.should.deep.equal({ items: matchObjArray });
@@ -479,8 +500,8 @@ describe('DictionaryBioPortal.js', () => {
     it('calls its URL, with a test url+apiKey and options ' +
       'for filtering and z-pruning the results and returns proper ' +
       'vsm match objects', cb => {
-      nock(testURLBase).get(melanomaURLWithFilteredDicts).
-        reply(200, melanoma3resultsJSONString);
+      nock(testURLBase).get(melanomaURLWithFilteredDicts)
+        .reply(200, melanoma3resultsJSONString);
       dict.getEntryMatchesForString(melanomaStr,
         {
           filter: { dictID:
@@ -500,10 +521,10 @@ describe('DictionaryBioPortal.js', () => {
     it('calls its URL, with a test url+apiKey and options ' +
       'for sorting and z-pruning the results and ' +
       'returns proper trimmed vsm match objects', cb => {
-      nock(testURLBase).get(melanomaURLWithFilteredDicts).
-        reply(200, melanoma3resultsJSONString);
-      nock(testURLBase).get(melanomaURL).
-        reply(200, melanoma5resultsJSONString);
+      nock(testURLBase).get(melanomaURLWithFilteredDicts)
+        .reply(200, melanoma3resultsJSONString);
+      nock(testURLBase).get(melanomaURL)
+        .reply(200, melanoma5resultsJSONString);
 
       // manually build the result array of objects
       var expectedFilteredResult = JSON.parse(
@@ -541,7 +562,8 @@ describe('DictionaryBioPortal.js', () => {
 
     it('lets the parent class add a number-string match', cb => {
       // we hypothesize the the server sends an empty results object
-      nock(testURLBase).get(searchNumURL).reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(searchNumURL)
+        .reply(200, melanomaNoResultsJSONString);
       dict.getMatchesForString(numberStr, {}, (err, res) => {
         res.should.deep.equal(
           {
@@ -553,7 +575,8 @@ describe('DictionaryBioPortal.js', () => {
 
     it('lets the parent class add a default refTerm match', cb => {
       // we hypothesize the the server sends an empty results object
-      nock(testURLBase).get(searchRefURL).reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(searchRefURL)
+        .reply(200, melanomaNoResultsJSONString);
       dict.getMatchesForString('it', {}, (err, res) => {
         res.should.deep.equal(
           {
@@ -617,7 +640,7 @@ describe('DictionaryBioPortal.js', () => {
       };
       var options2 = {
         filter: { id: [
-            'http://data.bioontology.org/ontologies/GO',
+          'http://data.bioontology.org/ontologies/GO',
         ]}
       };
       var res1 = dict.buildDictInfoURLs(options1);
@@ -634,6 +657,7 @@ describe('DictionaryBioPortal.js', () => {
 
       res1.should.deep.equal(expectedResult1);
       res2.should.deep.equal(expectedResult2);
+
       cb();
     });
 
@@ -1402,6 +1426,64 @@ describe('DictionaryBioPortal.js', () => {
     it('sorts results normally (as specified in the documentation)', cb => {
       var arr = dict.sortWithoutPreferredDict(testMatchObjArray);
       arr.should.deep.equal(testMatchObjArraySortedWithoutPrefDict);
+      cb();
+    });
+  });
+
+  describe('trimDictInfoArray', () => {
+    it('correctly trims the array of dictInfo objects based on the values ' +
+      'of page, pagesize and the number of results obtained', cb => {
+      var arr = [
+        {
+          id: 'http://data.bioontology.org/ontologies/CHEAR',
+          abbrev: 'CHEAR',
+          name: 'Children\'s Health Exposure Analysis Resource'
+        },
+        {
+          id: 'http://data.bioontology.org/ontologies/RH-MESH',
+          abbrev: 'RH-MESH',
+          name: 'Robert Hoehndorf Version of MeSH'
+        },
+        {
+          id: 'http://data.bioontology.org/ontologies/MCCL',
+          abbrev: 'MCCL',
+          name: 'Cell Line Ontology [by Mahadevan]'
+        },
+        {
+          id: 'http://data.bioontology.org/ontologies/GO',
+          abbrev: 'GO',
+          name: 'Gene Ontology'
+        }
+      ];
+
+      var res1 = dict.trimDictInfoArray(arr, 1, 1);
+      var res2 = dict.trimDictInfoArray(arr, 2, 1);
+      var res3 = dict.trimDictInfoArray(arr, 3, 1);
+      var res4 = dict.trimDictInfoArray(arr, 4, 1);
+      var res5 = dict.trimDictInfoArray(arr, 5, 1);
+      var res6 = dict.trimDictInfoArray(arr, 1, 2);
+      var res7 = dict.trimDictInfoArray(arr, 2, 2);
+      var res8 = dict.trimDictInfoArray(arr, 3, 2);
+      var res9 = dict.trimDictInfoArray(arr, 1, 3);
+      var res10 = dict.trimDictInfoArray(arr, 2, 3);
+      var res11 = dict.trimDictInfoArray(arr, 3, 3);
+      var res12 = dict.trimDictInfoArray(arr, 1, 4);
+      var res13 = dict.trimDictInfoArray(arr, 2, 4);
+
+      res1.should.deep.equal([arr[0]]);
+      res2.should.deep.equal([arr[1]]);
+      res3.should.deep.equal([arr[2]]);
+      res4.should.deep.equal([arr[3]]);
+      res5.should.deep.equal([]);
+      res6.should.deep.equal(arr.slice(0,2));
+      res7.should.deep.equal(arr.slice(2,4));
+      res8.should.deep.equal([]);
+      res9.should.deep.equal(arr.slice(0,3));
+      res10.should.deep.equal(arr.slice(3,4));
+      res11.should.deep.equal([]);
+      res12.should.deep.equal(arr);
+      res13.should.deep.equal([]);
+
       cb();
     });
   });
