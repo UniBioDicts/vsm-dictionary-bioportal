@@ -162,17 +162,41 @@ include this code:</p>
 <pre><code class="lang-javascript"><span class="hljs-keyword">var</span> DictionaryBioPortal = <span class="hljs-built_in">require</span>(<span class="hljs-string">&apos;./DictionaryBioPortal&apos;</span>);
 <span class="hljs-keyword">var</span> apiKey = <span class="hljs-string">&apos;a-valid-API-key-string&apos;</span>;
 <span class="hljs-keyword">var</span> dict = <span class="hljs-keyword">new</span> DictionaryBioPortal({apiKey: apiKey});
-dict.getMatchesForString(<span class="hljs-string">&apos;melanoma&apos;</span>, 
+
+dict.getDictInfos(
+  { filter: { id: [
+    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>,
+    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MESH&apos;</span>,
+    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MCCL&apos;</span>,
+    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/GO&apos;</span>
+  ]},
+  page: <span class="hljs-number">1</span>,
+  perPage: <span class="hljs-number">3</span>
+  }, (err, res) =&gt; {
+    <span class="hljs-keyword">if</span> (err) 
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(err, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>));
+    <span class="hljs-keyword">else</span> 
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(res, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>));
+  }
+);
+
+dict.getEntryMatchesForString(<span class="hljs-string">&apos;melanoma&apos;</span>,
   { filter: { dictID : [
-      <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MESH&apos;</span>,
-      <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MCCL&apos;</span>,
-      <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span> 
-    ]},
+        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MEH&apos;</span>,
+        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MCCL&apos;</span>,
+        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>
+      ]},
     sort: { dictID : [<span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>] },
     z: <span class="hljs-literal">true</span>,
     page: <span class="hljs-number">1</span>,
-    perPage: <span class="hljs-number">50</span> 
-  }, (err, res) =&gt; <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(res, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>)));
+    perPage: <span class="hljs-number">10</span>
+  }, (err, res) =&gt; {
+    <span class="hljs-keyword">if</span> (err) 
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(err, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>));
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(res, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>));
+  }
+);
 </code></pre>
 <p>Then, run <code>node test.js</code></p>
 <h2 id="tests">Tests</h2>
@@ -220,12 +244,12 @@ and the corresponding VSM objects.</p>
 <p>This specification relates to the function:<br> <code>getDictInfos(options, cb)</code></p>
 <p>An example of a URL string that is being built and send to BioPortal is:</p>
 <pre><code>http://data.bioontology.org/ontologies/GO?display_context=false
-</code></pre><p>If <code>options.filter.id</code> is empty or not properly defined, then we query all 
+</code></pre><p>If <code>options.filter.id</code> is empty or not properly defined, then we query all of
 BioPortal&apos;s ontologies with:</p>
 <pre><code>http://data.bioontology.org/ontologies/?display_context=false
-</code></pre><p>The <code>options.page</code> and <code>options.perPage</code> are used after the results are 
-returned to filter/prune their number (if they are present). If these options
-are missing you get all results unpruned.</p>
+</code></pre><p>The <code>options.page</code> and <code>options.perPage</code> are used to trim the number of the
+results. If these options are not properly defined, then the default values 
+from the BioPortal API are used (<em>1</em> and <em>50</em> respectively).</p>
 <p>After sending a query to ask for information about a specific ontology, the 
 returned JSON result is mapped to a VSM dictInfo object. The mapping is fully 
 detailed in the table below:</p>
@@ -400,7 +424,7 @@ object. The mapping is fully detailed in the table below:</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":["page-toc-optional"],"pluginsConfig":{"page-toc-optional":{"position":"before-first","selector":".markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4","showByDefault":true},"search":{},"position":"top","lunr":{"maxIndexSize":1000000},"showByDefault":true,"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"selector":".markdown-section h1, .markdown-section h2, .markdown-section h3"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-02-28T11:14:21.866Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-02-28T11:16:24.884Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":["page-toc-optional"],"pluginsConfig":{"page-toc-optional":{"position":"before-first","selector":".markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4","showByDefault":true},"search":{},"position":"top","lunr":{"maxIndexSize":1000000},"showByDefault":true,"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"selector":".markdown-section h1, .markdown-section h2, .markdown-section h3"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-03-04T10:08:03.978Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-03-04T10:09:09.290Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

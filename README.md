@@ -19,17 +19,41 @@ include this code:
 var DictionaryBioPortal = require('./DictionaryBioPortal');
 var apiKey = 'a-valid-API-key-string';
 var dict = new DictionaryBioPortal({apiKey: apiKey});
-dict.getMatchesForString('melanoma', 
+
+dict.getDictInfos(
+  { filter: { id: [
+    'http://data.bioontology.org/ontologies/CHEAR',
+    'http://data.bioontology.org/ontologies/RH-MESH',
+    'http://data.bioontology.org/ontologies/MCCL',
+    'http://data.bioontology.org/ontologies/GO'
+  ]},
+  page: 1,
+  perPage: 3
+  }, (err, res) => {
+    if (err) 
+      console.log(JSON.stringify(err, null, 4));
+    else 
+      console.log(JSON.stringify(res, null, 4));
+  }
+);
+
+dict.getEntryMatchesForString('melanoma',
   { filter: { dictID : [
-      'http://data.bioontology.org/ontologies/RH-MESH',
-      'http://data.bioontology.org/ontologies/MCCL',
-      'http://data.bioontology.org/ontologies/CHEAR' 
-    ]},
+        'http://data.bioontology.org/ontologies/RH-MEH',
+        'http://data.bioontology.org/ontologies/MCCL',
+        'http://data.bioontology.org/ontologies/CHEAR'
+      ]},
     sort: { dictID : ['http://data.bioontology.org/ontologies/CHEAR'] },
     z: true,
     page: 1,
-    perPage: 50 
-  }, (err, res) => console.log(JSON.stringify(res, null, 4)));
+    perPage: 10
+  }, (err, res) => {
+    if (err) 
+      console.log(JSON.stringify(err, null, 4));
+    else
+      console.log(JSON.stringify(res, null, 4));
+  }
+);
 ```
 Then, run `node test.js`
 
@@ -92,15 +116,15 @@ An example of a URL string that is being built and send to BioPortal is:
 ```
 http://data.bioontology.org/ontologies/GO?display_context=false
 ```
-If `options.filter.id` is empty or not properly defined, then we query all 
+If `options.filter.id` is empty or not properly defined, then we query all of
 BioPortal's ontologies with:
 ```
 http://data.bioontology.org/ontologies/?display_context=false
 ```
 
-The `options.page` and `options.perPage` are used after the results are 
-returned to filter/prune their number (if they are present). If these options
-are missing you get all results unpruned.
+The `options.page` and `options.perPage` are used to trim the number of the
+results. If these options are not properly defined, then the default values 
+from the BioPortal API are used (*1* and *50* respectively).
 
 After sending a query to ask for information about a specific ontology, the 
 returned JSON result is mapped to a VSM dictInfo object. The mapping is fully 
