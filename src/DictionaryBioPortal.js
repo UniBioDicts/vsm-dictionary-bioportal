@@ -11,8 +11,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     // an API key must provided to get data from BioPortal
     this.key = opt.apiKey || {};
 
-    // no context-related info is needed for matching to VSM terms
+    // the context-related info is needed for matching to VSM objects
     this.noContextField = 'display_context=false';
+    // BioPortal's default API values
+    this.bioPortalDefaultPage     = 1;
     this.bioPortalDefaultPageSize = 50;
 
     this.urlGetDictInfos = opt.urlGetDictInfos || baseUrl + '/ontologies/';
@@ -21,7 +23,48 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   getDictInfos(options, cb) {
-    return cb();
+    var page = this.hasProperPageProperty(options) ?
+      options.page : this.bioPortalDefaultPage;
+    var pagesize = this.hasProperPerPageProperty(options) ?
+      options.perPage : this.bioPortalDefaultPageSize;
+
+    var urlArray = this.buildDictInfoURLs(options);
+    // prune common urls (e.g. when someone evil asks for an ontology twice)
+    urlArray = Array.from(new Set(urlArray));
+    var callsRemaining = urlArray.length;
+
+    // cover the cases where you don't even need to send a query to BioPortal
+    if (callsRemaining > 1 && page > 1) {
+      var firstExpectedResIndex = (page - 1) * pagesize;
+      if (callsRemaining <= firstExpectedResIndex) {
+        return cb(null, { items: [] });
+      }
+    }
+
+    var urlToResultsMap = new Map();
+
+    for (let url of urlArray) {
+      console.log('URL: ' + url);
+      urlToResultsMap.set(url, []);
+
+      this.request(url, (err, res) => {
+        if (err) return cb(err);
+        urlToResultsMap.set(url, this.mapBioPortalResToDictInfoObj(res));
+
+        --callsRemaining;
+        /** all calls have returned, so trim results */
+        if (callsRemaining <= 0) {
+          var arr = [];
+          for (var dictInfoObjArray of urlToResultsMap.values()) {
+            arr = arr.concat(dictInfoObjArray);
+          }
+
+          arr = this.trimDictInfoArray(arr, page, pagesize);
+
+          cb(err, { items: arr });
+        }
+      });
+    }
   }
 
   getEntries(options, cb) {
@@ -55,11 +98,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
             );
           }
 
-          if (this.hasProperPerPageProperty(options)) {
-            arr = arr.splice(0, options.perPage);
-          } else {
-            arr = arr.splice(0, this.bioPortalDefaultPageSize);
-          }
+          arr = this.trimMatchObjArray(arr, options);
 
           cb(err, { items: arr });
         }
@@ -75,7 +114,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   buildEntryURLs(options) {
-    return 0;
+    return options;
   }
 
   buildMatchURLs(str, options) {
@@ -158,7 +197,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   prepareEntrySearchURL(options) {
-    return 0;
+    return options;
   }
 
   prepareMatchStringSearchURL(str, options, ontologiesArray) {
@@ -361,7 +400,6 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   hasProperPageProperty(options) {
-    // default value is 1 (from the API doc)
     return options.hasOwnProperty('page') &&
       Number.isInteger(options.page) &&
       options.page >= 1;
@@ -374,7 +412,6 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   hasProperPerPageProperty(options) {
-    // default value is 50 (from the API doc)
     return options.hasOwnProperty('perPage') &&
       Number.isInteger(options.perPage) &&
       options.perPage >= 1;
@@ -409,5 +446,25 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       !arrayDictIds.includes(b.dictID) ? -1 :
         !arrayDictIds.includes(a.dictID) &&
         arrayDictIds.includes(b.dictID) ? 1 : 0);
+  }
+
+  trimDictInfoArray(arr, page, pagesize) {
+    const numberOfResults = arr.length;
+    if (page === 1) {
+      return arr.slice(0, Math.min(numberOfResults, pagesize));
+    } else {
+      return arr.slice(
+        ((page - 1) * pagesize),
+        Math.min(page * pagesize, numberOfResults)
+      );
+    }
+  }
+
+  trimMatchObjArray(arr, options) {
+    if (this.hasProperPerPageProperty(options)) {
+      return arr.slice(0, options.perPage);
+    } else {
+      return arr.slice(0, this.bioPortalDefaultPageSize);
+    }
   }
 };
