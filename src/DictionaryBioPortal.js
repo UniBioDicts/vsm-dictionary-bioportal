@@ -305,7 +305,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           {
             tui: entry.semanticType // Type Unique Identifiers
           }),
-        // `z.obsolete` is added only when requesting for specific entry id
+        // `z.obsolete` is added only when requesting for a specific entry id
         ...((this.hasProperFilterIDProperty(options)) &&
           {
             obsolete: entry.obsolete
