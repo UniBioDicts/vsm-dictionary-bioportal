@@ -404,17 +404,17 @@ describe('DictionaryBioPortal.js', () => {
       dict.getEntries(
         {
           filter: {
-          id: [
-            // first id returns one entry (MCCL ontology)
-            'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
-            // second id returns 108 entries! (BFO source ontology)
-            'http://purl.obolibrary.org/obo/BFO_0000002'
-          ],
-          dictID : []
-        },
-        sort: 'dictID',
-        page: 1,
-        perPage: 20
+            id: [
+              // first id returns one entry (MCCL ontology)
+              'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
+              // second id returns 108 entries! (BFO source ontology)
+              'http://purl.obolibrary.org/obo/BFO_0000002'
+            ],
+            dictID : []
+          },
+          sort: 'dictID',
+          page: 1,
+          perPage: 20
         }, (err, res) => {
           expect(err).to.equal(null);
 
@@ -445,18 +445,18 @@ describe('DictionaryBioPortal.js', () => {
       dict.getEntries(
         {
           filter: {
-          id: [
-            // first id returns one entry (MCCL ontology)
-            'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
-            // second id returns 108 entries! (BFO source ontology)
-            'http://purl.obolibrary.org/obo/BFO_0000002'
-          ],
-          dictID : []
-        },
-        sort: 'dictID',
-        page: 1,
-        perPage: 20,
-        getAllResults: true
+            id: [
+              // first id returns one entry (MCCL ontology)
+              'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
+              // second id returns 108 entries! (BFO source ontology)
+              'http://purl.obolibrary.org/obo/BFO_0000002'
+            ],
+            dictID : []
+          },
+          sort: 'dictID',
+          page: 1,
+          perPage: 20,
+          getAllResults: true
         }, (err, res) => {
           expect(err).to.equal(null);
 
