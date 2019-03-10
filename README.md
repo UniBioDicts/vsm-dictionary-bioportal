@@ -13,37 +13,20 @@ REST API and translates the provided terms+IDs into a VSM-specific format.
 You first need to have a BioPortal account to use this dictionary. Once you 
 have an account, you will be given an API key to authorise your access to 
 the provided REST API's resources. Then, you can create a `test.js` file and
-include this code:
+include this code for example:
 
 ```javascript
-var DictionaryBioPortal = require('./DictionaryBioPortal');
-var apiKey = 'a-valid-API-key-string';
-var dict = new DictionaryBioPortal({apiKey: apiKey});
-
-dict.getDictInfos(
-  { filter: { id: [
-    'http://data.bioontology.org/ontologies/CHEAR',
-    'http://data.bioontology.org/ontologies/RH-MESH',
-    'http://data.bioontology.org/ontologies/MCCL',
-    'http://data.bioontology.org/ontologies/GO'
-  ]},
-  page: 1,
-  perPage: 3
-  }, (err, res) => {
-    if (err) 
-      console.log(JSON.stringify(err, null, 4));
-    else 
-      console.log(JSON.stringify(res, null, 4));
-  }
-);
+const DictionaryBioPortal = require('./DictionaryBioPortal');
+const apiKeyString = 'a-valid-API-key-string';
+const dict = new DictionaryBioPortal({apiKey: apiKeyString});
 
 dict.getEntryMatchesForString('melanoma',
   { filter: { dictID : [
-        'http://data.bioontology.org/ontologies/RH-MEH',
+        'http://data.bioontology.org/ontologies/RH-MESH',
         'http://data.bioontology.org/ontologies/MCCL',
-        'http://data.bioontology.org/ontologies/CHEAR'
+        'http://data.bioontology.org/ontologies/MEDDRA'
       ]},
-    sort: { dictID : ['http://data.bioontology.org/ontologies/CHEAR'] },
+    sort: { dictID : ['http://data.bioontology.org/ontologies/RH-MESH'] },
     z: true,
     page: 1,
     perPage: 10
@@ -59,7 +42,14 @@ Then, run `node test.js`
 
 ## Tests
 
-Run `npm test`, which runs tests with Mocha.
+Run `npm test`, which runs the source code tests with Mocha.  
+If you want to live test the BioPortal API and the main functions provided
+by DictionaryBioPortal, go to the `test` directory and run:
+```
+node getDictInfos.test.js
+node getEntries.test.js
+node getEntryMatchesForString.test.js
+```
 
 ## Browser Demo 
 
@@ -103,9 +93,33 @@ So after the build step, `demo-build.html` does not need Webpack to run.
 Like all VsmDictionary subclass implementations, this package follows
 the parent class
 [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md).
-Next, we will explain the mapping between BioPortal's API 
-results (as specified in the [API documentation](http://data.bioontology.org/documentation))
-and the corresponding VSM objects.
+In the next sections we will explain the mapping between BioPortal's API 
+terms (as specified in the [API documentation](http://data.bioontology.org/documentation))
+and the corresponding VSM objects. First, some info about the API itself:
+
+Most of the queries we launch against BioPortal use the *search endpoint*:
+`/search?q={search query}`, along with different parameters. One of the 
+most important parameters is the filtering on the ontologies' abbreviation
+names: `ontologies={ontologyAbbrev1,ontologyAbbrev2,ontologyAbbrev3}`.
+
+The returned terms have fields which are matched against the *search query* 
+(q parameter). The fields are searched based on the following order of 
+**match rank priority:**
+- id
+- prefLabelExact (match on the full pref label) 
+- prefLabel (match on partial pref label)
+- synonymExact (match on the full synonym(s))
+- synonym (match on the partial synonym(s))
+- notation (last fragment of id)
+- cui (for UMLS ontologies)
+- semantic_types
+
+If the URL has the `ontologies` parameter, then when you get results that have 
+the same field from the list above (e.g. same id), these are ordered according 
+to an internal (BioPortal) **ontology ranking**, which is updated every week. 
+At the time of writing these lines, the latest ranking was stored 
+[here](https://gist.github.com/mdorf/cea96433cf4bf7dd94d109c8e06e29c0) for 
+reference. 
 
 ### Map BioPortal to DictInfo VSM object
 
@@ -138,6 +152,74 @@ BioPortal ontology property | Type | Required | VSM dictInfo object property | N
 
 ### Map BioPortal to Entry VSM object
 
+This specification relates to the function:  
+ `getEntries(options, cb)`
+
+Depending on the `options.filter.id` and `options.filter.dictID` properties and
+following the vsm-dictionary parent class [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md),
+there can be only be 4 cases of queries that are send to BioPortal:
+
+- Non proper `filter.id` and `filter.dictID` or `options.filter` is an 
+empty object
+
+By default we search for all terms in all ontologies in BioPortal:
+```
+http://data.bioontology.org/search?ontologies=&ontology_types=ONTOLOGY&pagesize=1&display_context=false
+```
+Note that because the query above has neither a search string, nor multiple 
+ontologies to rank against, the returned results have no deterministic order. 
+
+- Non proper `filter.id` but proper `filter.dictID` property
+
+We use the following query to get all terms within a set of ontologies:
+```
+http://data.bioontology.org/search?ontologies=NCIT,GO&ontology_types=ONTOLOGY&pagesize=1&display_context=false
+```
+Also here, no sorting is done.
+
+- Proper `filter.id` but non proper `filter.dictID` property
+
+We use the following query to find a term by id (without any given ontologies):
+```
+http://data.bioontology.org/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false
+```
+Note that in case of querying for specific id(s), we ask also for obsolete terms.
+
+Furthermore, because of multiple ontologies having terms with the same id, we 
+sort the results according to the parent class [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md),
+only when the `options.getAllResults` hack is enabled. We have also implemented 
+a workaround that infers the ontology abbreviation name from the id in some 
+cases. In the case of multiple entries with the same id, the entry for which we 
+can correctly infer their source ontology will be ranked first in the returned
+result (otherwise the first in the array of sorted results).
+
+- Both proper `filter.id` and `filter.dictID` properties
+
+We use the following query to find a term by id within any of the given 
+ontologies:
+```
+http://data.bioontology.org/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=BAO,DOID&require_exact_match=true&also_search_obsolete=true&display_context=false
+```
+Same as the previous case, we sort only when the `options.getAllResults` hack 
+is enabled and the obsolete terms are also retrieved.
+
+So, after sending one query from the 4 categories above to BioPortal, the 
+returned JSON result object includes a `collection` property which has as 
+a value, an array of objects. Each object/element of that array is an entry 
+which is mapped to a VSM entry object. The mapping is fully detailed in the 
+table below:
+
+BioPortal entry's property | Type | Required | VSM entry object property | Notes  
+:---:|:---:|:---:|:---:|:---:
+`@id` | URL | **YES** | `id` | the concept-ID
+`links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology
+`definition` | Array | NO | `descr` | we map the first definition only
+`synonym` | Array | NO | `terms[i].str` | we map the whole array, first element of `terms` array is an object with property `str` and value the `prefLabel`
+`links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
+`cui` | Array | NO | `z.cui` | Concept Unique Identifier
+`semanticType` | Array | NO | `z.tui` | Type Unique Identifier
+`obsolete` | Boolean | NO | `z.obsolete` | This z option is returned only when requesting for specific entry id(s)
+
 ### Map BioPortal to Match VSM object
 
 This specification relates to the function:  
@@ -163,7 +245,7 @@ All the above are optional URL parameters, meaning that if
 for example the `options` object is empty, then the default BioPortal API 
 values will be used instead for `page` and `pagesize` (1 and 50 respectively), 
 while the search will be done on all ontologies available at BioPortal's 
-repository (the `ontologies=` part of the URL will be pruned):  
+repository (the `ontologies=` part of the URL will be pruned):
 ```
 http://data.bioontology.org/search?q=melanoma&display_context=false
 ```
@@ -178,12 +260,12 @@ object/element of that array is an entry which is mapped to a VSM match
 object. The mapping is fully detailed in the table below:
 
 BioPortal entry's property | Type | Required | VSM match object property | Notes  
-:---:|:---:|:---:|:---:|---
+:---:|:---:|:---:|:---:|:---:
 `@id` | URL | **YES** | `id` | the concept-ID
-`links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology 
-`prefLabel` | String | **YES** | `str` | the string representation of the term
+`links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology
+`prefLabel` | String | **YES** | `str`,`terms[0].str` | the string representation of the term
 `definition` | Array | NO | `descr` | we map the first definition only
-`synonym` | Array | NO | `terms.str` | we map the whole array
+`synonym` | Array | NO | `terms[i].str` | we map the whole array, first element of `terms` array is an object with property `str` and value the `prefLabel`
 `links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
 `cui` | Array | NO | `z.cui` | Concept Unique Identifier
 `semanticType` | Array | NO | `z.tui` | Type Unique Identifier

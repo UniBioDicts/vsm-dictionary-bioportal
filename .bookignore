@@ -2,8 +2,8 @@ docs/
 demo/
 resources/
 src/
+test/
 .bookignore
 gulpfile.js
 webpack.config.js
-bioPortal-API.test.js
 package*

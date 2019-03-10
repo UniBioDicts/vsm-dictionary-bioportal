@@ -158,35 +158,18 @@ REST API and translates the provided terms+IDs into a VSM-specific format.</p>
 <p>You first need to have a BioPortal account to use this dictionary. Once you 
 have an account, you will be given an API key to authorise your access to 
 the provided REST API&apos;s resources. Then, you can create a <code>test.js</code> file and
-include this code:</p>
-<pre><code class="lang-javascript"><span class="hljs-keyword">var</span> DictionaryBioPortal = <span class="hljs-built_in">require</span>(<span class="hljs-string">&apos;./DictionaryBioPortal&apos;</span>);
-<span class="hljs-keyword">var</span> apiKey = <span class="hljs-string">&apos;a-valid-API-key-string&apos;</span>;
-<span class="hljs-keyword">var</span> dict = <span class="hljs-keyword">new</span> DictionaryBioPortal({apiKey: apiKey});
-
-dict.getDictInfos(
-  { filter: { id: [
-    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>,
-    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MESH&apos;</span>,
-    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MCCL&apos;</span>,
-    <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/GO&apos;</span>
-  ]},
-  page: <span class="hljs-number">1</span>,
-  perPage: <span class="hljs-number">3</span>
-  }, (err, res) =&gt; {
-    <span class="hljs-keyword">if</span> (err) 
-      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(err, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>));
-    <span class="hljs-keyword">else</span> 
-      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">JSON</span>.stringify(res, <span class="hljs-literal">null</span>, <span class="hljs-number">4</span>));
-  }
-);
+include this code for example:</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> DictionaryBioPortal = <span class="hljs-built_in">require</span>(<span class="hljs-string">&apos;./DictionaryBioPortal&apos;</span>);
+<span class="hljs-keyword">const</span> apiKeyString = <span class="hljs-string">&apos;a-valid-API-key-string&apos;</span>;
+<span class="hljs-keyword">const</span> dict = <span class="hljs-keyword">new</span> DictionaryBioPortal({apiKey: apiKeyString});
 
 dict.getEntryMatchesForString(<span class="hljs-string">&apos;melanoma&apos;</span>,
   { filter: { dictID : [
-        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MEH&apos;</span>,
+        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MESH&apos;</span>,
         <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MCCL&apos;</span>,
-        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>
+        <span class="hljs-string">&apos;http://data.bioontology.org/ontologies/MEDDRA&apos;</span>
       ]},
-    sort: { dictID : [<span class="hljs-string">&apos;http://data.bioontology.org/ontologies/CHEAR&apos;</span>] },
+    sort: { dictID : [<span class="hljs-string">&apos;http://data.bioontology.org/ontologies/RH-MESH&apos;</span>] },
     z: <span class="hljs-literal">true</span>,
     page: <span class="hljs-number">1</span>,
     perPage: <span class="hljs-number">10</span>
@@ -200,8 +183,12 @@ dict.getEntryMatchesForString(<span class="hljs-string">&apos;melanoma&apos;</sp
 </code></pre>
 <p>Then, run <code>node test.js</code></p>
 <h2 id="tests">Tests</h2>
-<p>Run <code>npm test</code>, which runs tests with Mocha.</p>
-<h2 id="browser-demo">Browser Demo</h2>
+<p>Run <code>npm test</code>, which runs the source code tests with Mocha.<br>If you want to live test the BioPortal API and the main functions provided
+by DictionaryBioPortal, go to the <code>test</code> directory and run:</p>
+<pre><code>node getDictInfos.test.js
+node getEntries.test.js
+node getEntryMatchesForString.test.js
+</code></pre><h2 id="browser-demo">Browser Demo</h2>
 <p>Run <code>npm run demo</code> to start the interactive demo.
 The demo currently supports only the <code>getMatchesForString()</code> function.
 This command automatically opens a browser page with 6 input-fields to
@@ -237,9 +224,32 @@ So after the build step, <code>demo-build.html</code> does not need Webpack to r
 <p>Like all VsmDictionary subclass implementations, this package follows
 the parent class
 <a href="https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md" target="_blank">specification</a>.
-Next, we will explain the mapping between BioPortal&apos;s API 
-results (as specified in the <a href="http://data.bioontology.org/documentation" target="_blank">API documentation</a>)
-and the corresponding VSM objects.</p>
+In the next sections we will explain the mapping between BioPortal&apos;s API 
+terms (as specified in the <a href="http://data.bioontology.org/documentation" target="_blank">API documentation</a>)
+and the corresponding VSM objects. First, some info about the API itself:</p>
+<p>Most of the queries we launch against BioPortal use the <em>search endpoint</em>:
+<code>/search?q={search query}</code>, along with different parameters. One of the 
+most important parameters is the filtering on the ontologies&apos; abbreviation
+names: <code>ontologies={ontologyAbbrev1,ontologyAbbrev2,ontologyAbbrev3}</code>.</p>
+<p>The returned terms have fields which are matched against the <em>search query</em> 
+(q parameter). The fields are searched based on the following order of 
+<strong>match rank priority:</strong></p>
+<ul>
+<li>id</li>
+<li>prefLabelExact (match on the full pref label) </li>
+<li>prefLabel (match on partial pref label)</li>
+<li>synonymExact (match on the full synonym(s))</li>
+<li>synonym (match on the partial synonym(s))</li>
+<li>notation (last fragment of id)</li>
+<li>cui (for UMLS ontologies)</li>
+<li>semantic_types</li>
+</ul>
+<p>If the URL has the <code>ontologies</code> parameter, then when you get results that have 
+the same field from the list above (e.g. same id), these are ordered according 
+to an internal (BioPortal) <strong>ontology ranking</strong>, which is updated every week. 
+At the time of writing these lines, the latest ranking was stored 
+<a href="https://gist.github.com/mdorf/cea96433cf4bf7dd94d109c8e06e29c0" target="_blank">here</a> for 
+reference. </p>
 <h3 id="map-bioportal-to-dictinfo-vsm-object">Map BioPortal to DictInfo VSM object</h3>
 <p>This specification relates to the function:<br> <code>getDictInfos(options, cb)</code></p>
 <p>An example of a URL string that is being built and send to BioPortal is:</p>
@@ -288,6 +298,119 @@ detailed in the table below:</p>
 </tbody>
 </table>
 <h3 id="map-bioportal-to-entry-vsm-object">Map BioPortal to Entry VSM object</h3>
+<p>This specification relates to the function:<br> <code>getEntries(options, cb)</code></p>
+<p>Depending on the <code>options.filter.id</code> and <code>options.filter.dictID</code> properties and
+following the vsm-dictionary parent class <a href="https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md" target="_blank">specification</a>,
+there can be only be 4 cases of queries that are send to BioPortal:</p>
+<ul>
+<li>Non proper <code>filter.id</code> and <code>filter.dictID</code> or <code>options.filter</code> is an 
+empty object</li>
+</ul>
+<p>By default we search for all terms in all ontologies in BioPortal:</p>
+<pre><code>http://data.bioontology.org/search?ontologies=&amp;ontology_types=ONTOLOGY&amp;pagesize=1&amp;display_context=false
+</code></pre><p>Note that because the query above has neither a search string, nor multiple 
+ontologies to rank against, the returned results have no deterministic order. </p>
+<ul>
+<li>Non proper <code>filter.id</code> but proper <code>filter.dictID</code> property</li>
+</ul>
+<p>We use the following query to get all terms within a set of ontologies:</p>
+<pre><code>http://data.bioontology.org/search?ontologies=NCIT,GO&amp;ontology_types=ONTOLOGY&amp;pagesize=1&amp;display_context=false
+</code></pre><p>Also here, no sorting is done.</p>
+<ul>
+<li>Proper <code>filter.id</code> but non proper <code>filter.dictID</code> property</li>
+</ul>
+<p>We use the following query to find a term by id (without any given ontologies):</p>
+<pre><code>http://data.bioontology.org/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&amp;ontologies=&amp;require_exact_match=true&amp;also_search_obsolete=true&amp;display_context=false
+</code></pre><p>Note that in case of querying for specific id(s), we ask also for obsolete terms.</p>
+<p>Furthermore, because of multiple ontologies having terms with the same id, we 
+sort the results according to the parent class <a href="https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md" target="_blank">specification</a>,
+only when the <code>options.getAllResults</code> hack is enabled. We have also implemented 
+a workaround that infers the ontology abbreviation name from the id in some 
+cases. In the case of multiple entries with the same id, the entry for which we 
+can correctly infer their source ontology will be ranked first in the returned
+result (otherwise the first in the array of sorted results).</p>
+<ul>
+<li>Both proper <code>filter.id</code> and <code>filter.dictID</code> properties</li>
+</ul>
+<p>We use the following query to find a term by id within any of the given 
+ontologies:</p>
+<pre><code>http://data.bioontology.org/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&amp;ontologies=BAO,DOID&amp;require_exact_match=true&amp;also_search_obsolete=true&amp;display_context=false
+</code></pre><p>Same as the previous case, we sort only when the <code>options.getAllResults</code> hack 
+is enabled and the obsolete terms are also retrieved.</p>
+<p>So, after sending one query from the 4 categories above to BioPortal, the 
+returned JSON result object includes a <code>collection</code> property which has as 
+a value, an array of objects. Each object/element of that array is an entry 
+which is mapped to a VSM entry object. The mapping is fully detailed in the 
+table below:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">BioPortal entry&apos;s property</th>
+<th style="text-align:center">Type</th>
+<th style="text-align:center">Required</th>
+<th style="text-align:center">VSM entry object property</th>
+<th style="text-align:center">Notes  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>@id</code></td>
+<td style="text-align:center">URL</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>id</code></td>
+<td style="text-align:center">the concept-ID</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>links.ontology</code></td>
+<td style="text-align:center">URL</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>dictID</code></td>
+<td style="text-align:center">the unique identifier of the ontology</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>definition</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>descr</code></td>
+<td style="text-align:center">we map the first definition only</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>synonym</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>terms[i].str</code></td>
+<td style="text-align:center">we map the whole array, first element of <code>terms</code> array is an object with property <code>str</code> and value the <code>prefLabel</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>links.ontology</code></td>
+<td style="text-align:center">URL</td>
+<td style="text-align:center"><strong>YES</strong></td>
+<td style="text-align:center"><code>z.dictAbbrev</code></td>
+<td style="text-align:center">the unique ontology acronym</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>cui</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>z.cui</code></td>
+<td style="text-align:center">Concept Unique Identifier</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>semanticType</code></td>
+<td style="text-align:center">Array</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>z.tui</code></td>
+<td style="text-align:center">Type Unique Identifier</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>obsolete</code></td>
+<td style="text-align:center">Boolean</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"><code>z.obsolete</code></td>
+<td style="text-align:center">This z option is returned only when requesting for specific entry id(s)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="map-bioportal-to-match-vsm-object">Map BioPortal to Match VSM object</h3>
 <p>This specification relates to the function:<br> <code>getEntryMatchesForString(str, options, cb)</code></p>
 <p>An example of a URL string that is being built and send to BioPortal is:</p>
@@ -308,7 +431,7 @@ dictionaries and all the rest for example.</li>
 for example the <code>options</code> object is empty, then the default BioPortal API 
 values will be used instead for <code>page</code> and <code>pagesize</code> (1 and 50 respectively), 
 while the search will be done on all ontologies available at BioPortal&apos;s 
-repository (the <code>ontologies=</code> part of the URL will be pruned):  </p>
+repository (the <code>ontologies=</code> part of the URL will be pruned):</p>
 <pre><code>http://data.bioontology.org/search?q=melanoma&amp;display_context=false
 </code></pre><p>The search string is obligatory though (if you want to get non-empty results :) 
 and the <code>display_context=false</code> is always added since it does not provide any
@@ -324,7 +447,7 @@ object. The mapping is fully detailed in the table below:</p>
 <th style="text-align:center">Type</th>
 <th style="text-align:center">Required</th>
 <th style="text-align:center">VSM match object property</th>
-<th>Notes  </th>
+<th style="text-align:center">Notes  </th>
 </tr>
 </thead>
 <tbody>
@@ -333,56 +456,56 @@ object. The mapping is fully detailed in the table below:</p>
 <td style="text-align:center">URL</td>
 <td style="text-align:center"><strong>YES</strong></td>
 <td style="text-align:center"><code>id</code></td>
-<td>the concept-ID</td>
+<td style="text-align:center">the concept-ID</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>links.ontology</code></td>
 <td style="text-align:center">URL</td>
 <td style="text-align:center"><strong>YES</strong></td>
 <td style="text-align:center"><code>dictID</code></td>
-<td>the unique identifier of the ontology </td>
+<td style="text-align:center">the unique identifier of the ontology</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>prefLabel</code></td>
 <td style="text-align:center">String</td>
 <td style="text-align:center"><strong>YES</strong></td>
-<td style="text-align:center"><code>str</code></td>
-<td>the string representation of the term</td>
+<td style="text-align:center"><code>str</code>,<code>terms[0].str</code></td>
+<td style="text-align:center">the string representation of the term</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>definition</code></td>
 <td style="text-align:center">Array</td>
 <td style="text-align:center">NO</td>
 <td style="text-align:center"><code>descr</code></td>
-<td>we map the first definition only</td>
+<td style="text-align:center">we map the first definition only</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>synonym</code></td>
 <td style="text-align:center">Array</td>
 <td style="text-align:center">NO</td>
-<td style="text-align:center"><code>terms.str</code></td>
-<td>we map the whole array</td>
+<td style="text-align:center"><code>terms[i].str</code></td>
+<td style="text-align:center">we map the whole array, first element of <code>terms</code> array is an object with property <code>str</code> and value the <code>prefLabel</code></td>
 </tr>
 <tr>
 <td style="text-align:center"><code>links.ontology</code></td>
 <td style="text-align:center">URL</td>
 <td style="text-align:center"><strong>YES</strong></td>
 <td style="text-align:center"><code>z.dictAbbrev</code></td>
-<td>the unique ontology acronym</td>
+<td style="text-align:center">the unique ontology acronym</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>cui</code></td>
 <td style="text-align:center">Array</td>
 <td style="text-align:center">NO</td>
 <td style="text-align:center"><code>z.cui</code></td>
-<td>Concept Unique Identifier</td>
+<td style="text-align:center">Concept Unique Identifier</td>
 </tr>
 <tr>
 <td style="text-align:center"><code>semanticType</code></td>
 <td style="text-align:center">Array</td>
 <td style="text-align:center">NO</td>
 <td style="text-align:center"><code>z.tui</code></td>
-<td>Type Unique Identifier</td>
+<td style="text-align:center">Type Unique Identifier</td>
 </tr>
 </tbody>
 </table>
@@ -424,7 +547,7 @@ object. The mapping is fully detailed in the table below:</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":["page-toc-optional"],"pluginsConfig":{"page-toc-optional":{"position":"before-first","selector":".markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4","showByDefault":true},"search":{},"position":"top","lunr":{"maxIndexSize":1000000},"showByDefault":true,"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"selector":".markdown-section h1, .markdown-section h2, .markdown-section h3"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-03-04T10:08:03.978Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-03-04T10:09:09.290Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"README","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"3.1.1","theme":"default","variables":{},"plugins":["page-toc-optional"],"pluginsConfig":{"page-toc-optional":{"position":"before-first","selector":".markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4","showByDefault":true},"search":{},"position":"top","lunr":{"maxIndexSize":1000000},"showByDefault":true,"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"selector":".markdown-section h1, .markdown-section h2, .markdown-section h3"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2019-03-10T22:55:51.713Z","type":"markdown"},"gitbook":{"version":"3.1.1","time":"2019-03-10T22:56:36.305Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
