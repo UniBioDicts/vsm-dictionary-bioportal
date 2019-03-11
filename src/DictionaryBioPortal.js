@@ -6,7 +6,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     const opt = options || {};
     super(opt);
 
-    const baseUrl = opt.baseUrl || 'http://data.bioontology.org';
+    const baseURL = opt.baseURL || 'http://data.bioontology.org';
 
     // enable the console.log() usage
     this.enableLogging = opt.log || false;
@@ -28,10 +28,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     this.bioPortalMaximumOntologiesNumWithSameID = 130; // hacked value
     this.bioPortalMaximumPageSize = 5000;
 
-    this.urlGetDictInfos = opt.urlGetDictInfos || baseUrl + '/ontologies/';
+    this.urlGetDictInfos = opt.urlGetDictInfos || baseURL + '/ontologies/';
     this.urlGetEntries = opt.urlGetEntries ||
-      baseUrl + '/search?q=$idString' + '&ontologies=$dictIDs';
-    this.urlGetMatches = opt.urlGetMatches || baseUrl + '/search?q=$queryString';
+      baseURL + '/search?q=$idString' + '&ontologies=$dictIDs';
+    this.urlGetMatches = opt.urlGetMatches || baseURL + '/search?q=$queryString';
   }
 
   getDictInfos(options, cb) {
