@@ -47,7 +47,7 @@
     "gulp-load-plugins": "^1.5.0"
   },
   "dependencies": {
-    "vsm-dictionary": "^2.6.0",
+    "vsm-dictionary": "^2.6.2",
     "xmlhttprequest": "^1.8.0"
   }
 }
