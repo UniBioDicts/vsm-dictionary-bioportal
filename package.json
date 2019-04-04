@@ -1,6 +1,6 @@
 {
   "name": "vsm-dictionary-bioportal",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Implementation of a VSM-dictionary that interfaces with the BioPortal REST API",
   "main": "src/DictionaryBioPortal.js",
   "scripts": {
