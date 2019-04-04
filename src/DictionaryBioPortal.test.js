@@ -11,9 +11,9 @@ describe('DictionaryBioPortal.js', () => {
   const apiKey = 'testAPIKey';
   const testURLBase = 'http://test';
   const dictNoApiKey =
-    new DictionaryBioPortal({ baseUrl: testURLBase });
+    new DictionaryBioPortal({ baseURL: testURLBase });
   const dict =
-    new DictionaryBioPortal({ baseUrl: testURLBase, apiKey: apiKey, log: true });
+    new DictionaryBioPortal({ baseURL: testURLBase, apiKey: apiKey, log: true });
 
   const noContext = '&display_context=false';
   const noContext2 = '?display_context=false';
