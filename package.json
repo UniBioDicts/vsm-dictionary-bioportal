@@ -1,11 +1,11 @@
 {
   "name": "vsm-dictionary-bioportal",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Implementation of a VSM-dictionary that interfaces with the BioPortal REST API",
   "main": "src/DictionaryBioPortal.js",
   "scripts": {
-    "lint": "eslint src demo",
-    "lint-fix": "eslint src --fix",
+    "lint": "eslint src demo test",
+    "lint-fix": "eslint src demo test --fix",
     "test": "mocha \"src/**/*.test.js\" --check-leaks",
     "start": "npm run demo",
     "demo": "webpack-dev-server --config demo/webpack.config.js",

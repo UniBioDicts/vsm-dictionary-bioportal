@@ -11,18 +11,18 @@ const dict = new DictionaryBioPortal({apiKey: apiKey, log: true});
 
 dict.getEntries(
   { filter: {
-      id: [
-        'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
-        'http://purl.obolibrary.org/obo/BFO_0000040',
-        'http://purl.bioontology.org/ontology/MEDDRA/10053571',
-        'http://purl.obolibrary.org/obo/BFO_0000002',
-      ],
-      dictID : []
-    },
-    sort: 'dictID',
-    page: 1,
-    perPage: 4,
-    getAllResults: true
+    id: [
+      'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
+      'http://purl.obolibrary.org/obo/BFO_0000040',
+      'http://purl.bioontology.org/ontology/MEDDRA/10053571',
+      'http://purl.obolibrary.org/obo/BFO_0000002',
+    ],
+    dictID : []
+  },
+  sort: 'dictID',
+  page: 1,
+  perPage: 4,
+  getAllResults: true
   }, (err, res) => {
     if (err) console.log(JSON.stringify(err, null, 4));
     else {

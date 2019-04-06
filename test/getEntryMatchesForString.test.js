@@ -11,13 +11,13 @@ const dict = new DictionaryBioPortal({apiKey: apiKey, log: true});
 
 dict.getEntryMatchesForString('melanoma',
   { filter: { dictID : [
-        'http://data.bioontology.org/ontologies/RH-MESH',
-        'http://data.bioontology.org/ontologies/MCCL',
-        'http://data.bioontology.org/ontologies/MEDDRA'
-      ]},
-    sort: { dictID : ['http://data.bioontology.org/ontologies/MCCL'] },
-    page: 1,
-    perPage: 10
+    'http://data.bioontology.org/ontologies/RH-MESH',
+    'http://data.bioontology.org/ontologies/MCCL',
+    'http://data.bioontology.org/ontologies/MEDDRA'
+  ]},
+  sort: { dictID : ['http://data.bioontology.org/ontologies/MCCL'] },
+  page: 1,
+  perPage: 10
   }, (err, res) => {
     if (err) console.log(JSON.stringify(err, null, 4));
     else {
