@@ -2,11 +2,5 @@
   "gitbook": "3.1.1",
   "structure": {
     "summary": "SUMMARY.md"
-  },
-  "plugins": [ "page-toc-optional" ],
-  "pluginsConfig": {
-      "selector": ".markdown-section h1, .markdown-section h2, .markdown-section h3",
-      "position": "top", 
-      "showByDefault": true
   }
 }
