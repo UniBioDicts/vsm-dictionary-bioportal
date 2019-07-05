@@ -16,13 +16,13 @@ dict.getEntries(
       'http://purl.obolibrary.org/obo/BFO_0000040',
       'http://purl.bioontology.org/ontology/MEDDRA/10053571',
       'http://purl.obolibrary.org/obo/BFO_0000002',
+      'http://semantic-dicom.org/dcm#ATT2010015E'
     ],
     dictID : []
   },
-  sort: 'dictID',
   page: 1,
-  perPage: 4,
-  getAllResults: true
+  perPage: 5,
+  getAllResults: false
   }, (err, res) => {
     if (err) console.log(JSON.stringify(err, null, 4));
     else {

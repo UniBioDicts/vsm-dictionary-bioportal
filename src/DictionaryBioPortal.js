@@ -29,9 +29,16 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     this.bioPortalMaximumPageSize = 5000;
 
     this.urlGetDictInfos = opt.urlGetDictInfos || baseURL + '/ontologies/';
+
     this.urlGetEntries = opt.urlGetEntries
       || baseURL + '/search?q=$idString' + '&ontologies=$dictIDs';
-    this.urlGetMatches = opt.urlGetMatches || baseURL + '/search?q=$queryString';
+    this.urlGetEntriesFromProperties = opt.urlGetEntriesFromProperties
+      || baseURL + '/property_search?q=$idString' + '&ontologies=$dictIDs';
+
+    this.urlGetMatches = opt.urlGetMatches
+      || baseURL + '/search?q=$queryString';
+    this.urlGetMatchesFromProperties = opt.urlGetMatchesFromProperties
+      || baseURL + '/property_search?q=$queryString';
   }
 
   getDictInfos(options, cb) {
@@ -104,7 +111,15 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
       this.request(url, (err, res) => {
         if (err) return cb(err);
-        urlToResultsMap.set(url, this.mapBioPortalResToEntryObj(res, options));
+
+        if (url.includes('/property_search'))
+          urlToResultsMap.set(
+            url, this.mapBioPortalPropertySearchResToEntryObj(res, options)
+          );
+        else
+          urlToResultsMap.set(
+            url, this.mapBioPortalSearchResToEntryObj(res, options)
+          );
 
         --callsRemaining;
         // all calls have returned, so sort and trim results
@@ -116,13 +131,13 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
           // Sort only if the request was for specific id(s)
           // and getAllResults hack is enabled
-          if (
+          /*if (
             options.getAllResults
             && this.hasProperFilterIDProperty(options)
           ) {
             console.log('Sorting in client...');
             arr = this.sortEntries(arr, options);
-          }
+          }*/
 
           // re-arrange if possible the returned results when requesting
           // entries by id, in case that some of them share the same id
@@ -156,7 +171,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
       this.request(url, (err, res) => {
         if (err) return cb(err);
-        urlToResultsMap.set(url, this.mapBioPortalResToMatchObj(res, str));
+        urlToResultsMap.set(url, this.mapBioPortalSearchResToMatchObj(res, str));
 
         --callsRemaining;
         // all calls have returned, so prune, sort and trim results
@@ -191,26 +206,36 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       !this.hasProperFilterIDProperty(options)
       && !this.hasProperFilterDictIDProperty(options)
     ) {
-      return [this.prepareEntrySearchURL(options, '', [])];
+      return this.prepareEntrySearchURLs(options, '', []);
     } else if (
       !this.hasProperFilterIDProperty(options)
       && this.hasProperFilterDictIDProperty(options)
     ) {
       const ontologiesArray =
         this.getDictAcronymsFromArray(options.filter.dictID);
-      return [this.prepareEntrySearchURL(options, '', ontologiesArray)];
+      return this.prepareEntrySearchURLs(options, '', ontologiesArray);
     } else if (
       this.hasProperFilterIDProperty(options)
       && !this.hasProperFilterDictIDProperty(options)
     ) {
-      return options.filter.id.map(entryId =>
-        this.prepareEntrySearchURL(options, entryId, []));
+      let urlArray = [];
+      for (let entryId of options.filter.id) {
+        urlArray = urlArray.concat(
+          this.prepareEntrySearchURLs(options, entryId, [])
+        );
+      }
+      return urlArray;
     } else { // both proper `filter.id` and `filter.dictID`
       const ontologiesArray =
         this.getDictAcronymsFromArray(options.filter.dictID);
-      return options.filter.id.map(entryId =>
-        this.prepareEntrySearchURL(options, entryId, ontologiesArray)
-      );
+
+      let urlArray = [];
+      for (let entryId of options.filter.id) {
+        urlArray = urlArray.concat(
+          this.prepareEntrySearchURLs(options, entryId, ontologiesArray)
+        );
+      }
+      return urlArray;
     }
   }
 
@@ -299,7 +324,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }
   }
 
-  mapBioPortalResToEntryObj(res, options) {
+  mapBioPortalSearchResToEntryObj(res, options) {
     return res.collection.map(entry => ({
       id: entry['@id'],
       dictID: entry.links.ontology,
@@ -327,7 +352,22 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }));
   }
 
-  mapBioPortalResToMatchObj(res, str) {
+  mapBioPortalPropertySearchResToEntryObj(res) {
+    return res.collection.map(entry => ({
+      id: entry['@id'],
+      dictID: entry.links.ontology,
+      ...((typeof entry.definition !== 'undefined')
+        && {
+          descr: entry.definition[0] // take just the first definition
+        }),
+      terms: entry.label.map(label => ({ str: label })),
+      z: {
+        dictAbbrev: entry.links.ontology.split('/').pop()
+      }
+    }));
+  }
+
+  mapBioPortalSearchResToMatchObj(res, str) {
     return res.collection.map(entry => ({
       id: entry['@id'],
       dictID: entry.links.ontology,
@@ -352,6 +392,23 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }));
   }
 
+  mapBioPortalPropertySearchResToMatchObj(res, str) {
+    return res.collection.map(entry => ({
+      id: entry['@id'],
+      dictID: entry.links.ontology,
+      str: entry.label[0],
+      ...((typeof entry.definition !== 'undefined')
+        && {
+          descr: entry.definition[0] // take just the first definition
+        }),
+      type: entry.label.startsWith(str) ? 'S' : 'T',
+      terms: entry.label.map(label => ({ str: label })),
+      z: {
+        dictAbbrev: entry.links.ontology.split('/').pop()
+      }
+    }));
+  }
+
   getDictAcronymsFromArray(arr) {
     if (arr.length === 0) return arr;
     return arr.map(dictID => this.getDictAcronym(dictID));
@@ -371,33 +428,46 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     return url;
   }
 
-  prepareEntrySearchURL(options, searchId, ontologiesArray) {
-    let url = this.urlGetEntries;
+  prepareEntrySearchURLs(options, searchId, ontologiesArray) {
+    let searchURL = this.urlGetEntries;
+    let propertySearchURL = this.urlGetEntriesFromProperties;
 
     if (searchId === '') {
-      url = url.replace('q=$idString', '')
+      searchURL = searchURL.replace('q=$idString', '')
         .replace('&ontologies=', 'ontologies=') + '&ontology_types=ONTOLOGY';
     } else {
-      url = url.replace('$idString', this.fixedEncodeURIComponent(searchId))
+      searchURL = searchURL.replace('$idString', this.fixedEncodeURIComponent(searchId))
         + '&require_exact_match=true&also_search_obsolete=true';
+      propertySearchURL = propertySearchURL.replace('$idString', this.fixedEncodeURIComponent(searchId))
+        + '&require_exact_match=true';
     }
 
-    url = (ontologiesArray.length !== 0)
-      ? url.replace('$dictIDs', ontologiesArray.toString())
-      : url.replace('$dictIDs', '');
+    searchURL = (ontologiesArray.length !== 0)
+      ? searchURL.replace('$dictIDs', ontologiesArray.toString())
+      : searchURL.replace('$dictIDs', '');
+
+    propertySearchURL = (ontologiesArray.length !== 0)
+      ? propertySearchURL.replace('$dictIDs', ontologiesArray.toString())
+      : propertySearchURL.replace('$dictIDs', '');
 
     if (this.hasProperPageProperty(options)) {
       const pageNumber = options.page;
-      url += '&page=' + pageNumber;
+      searchURL += '&page=' + pageNumber;
+      propertySearchURL += '&page=' + pageNumber;
     }
 
     if (this.hasProperPerPageProperty(options)) {
       const NumOfResultsPerPage = options.perPage;
-      url += '&pagesize=' + NumOfResultsPerPage;
+      searchURL += '&pagesize=' + NumOfResultsPerPage;
+      propertySearchURL += '&pagesize=' + NumOfResultsPerPage;
     }
 
-    url += '&' + this.noContextField;
-    return url;
+    searchURL += '&' + this.noContextField;
+    propertySearchURL += '&' + this.noContextField;
+
+    return searchId === ''
+      ? [searchURL]
+      : [searchURL, propertySearchURL];
   }
 
   prepareMatchStringSearchURL(str, options, ontologiesArray) {

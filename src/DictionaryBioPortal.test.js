@@ -32,10 +32,6 @@ describe('DictionaryBioPortal.js', () => {
   const searchGOontologyURL = '/ontologies/GO' + noContext2;
   const errorNonValidAcronymURL1 = '/search?q=a&ontologies=NonValidAcronym' + noContext;
   const errorNonValidAcronymURL2 = '/ontologies/nonValidAcronym' + noContext2;
-  const searchByIdURL = searchStr + 'http%3A%2F%2Fwww.semanticweb.org%2Fpallabi.d%2Fontologies%2F2014%2F2%2Funtitled-ontology-11%23CXorf36-Glu142%2A&ontologies=&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=20' + noContext;
-  const searchByIdHackedURL = searchStr + 'http%3A%2F%2Fwww.semanticweb.org%2Fpallabi.d%2Fontologies%2F2014%2F2%2Funtitled-ontology-11%23CXorf36-Glu142%2A&ontologies=&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=130' + noContext;
-  const searchByIdMultipleResultsURL = searchStr + 'http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FBFO_0000002&ontologies=&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=20' + noContext;
-  const searchByIdMultipleResultsHackedURL = searchStr + 'http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FBFO_0000002&ontologies=&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=130' + noContext;
 
   const jsonMelanoma5resultsPath = path.join(__dirname, '..',
     'resources', 'query_melanoma_5_results.json');
@@ -55,14 +51,6 @@ describe('DictionaryBioPortal.js', () => {
     'resources', 'error_non_valid_acronym_1.json');
   const jsonError2Path = path.join(__dirname, '..',
     'resources', 'error_non_valid_acronym_2.json');
-  const jsonGetEntryByIdPath = path.join(__dirname, '..',
-    'resources', 'query_entry_by_id.json');
-  const jsonGetEntryByIdHackedPath = path.join(__dirname, '..',
-    'resources', 'query_entry_by_id_hacked.json');
-  const jsonGetEntryByIdMultipleResultsPath = path.join(__dirname, '..',
-    'resources', 'query_entry_by_id_multiple_results.json');
-  const jsonGetEntryByIdMultipleResultsHackedPath = path.join(__dirname, '..',
-    'resources', 'query_entry_by_id_multiple_results_hacked.json');
 
   const melanoma5resultsJSONString =
     fs.readFileSync(jsonMelanoma5resultsPath, 'utf8');
@@ -82,14 +70,6 @@ describe('DictionaryBioPortal.js', () => {
     fs.readFileSync(jsonError1Path, 'utf8');
   const errorNonValidAcronymURL2JSONString =
     fs.readFileSync(jsonError2Path, 'utf8');
-  const entryByIdJSONString =
-    fs.readFileSync(jsonGetEntryByIdPath, 'utf8');
-  const entryByIdHackedJSONString =
-    fs.readFileSync(jsonGetEntryByIdHackedPath, 'utf8');
-  const entryByIdMultipleResultsJSONString =
-    fs.readFileSync(jsonGetEntryByIdMultipleResultsPath, 'utf8');
-  const entryByIdMultipleResultsHackedJSONString =
-    fs.readFileSync(jsonGetEntryByIdMultipleResultsHackedPath, 'utf8');
 
   const matchObjArray = [
     {
@@ -390,124 +370,6 @@ describe('DictionaryBioPortal.js', () => {
           );
           cb();
         });
-    });
-  });
-
-  describe('getEntries', () => {
-    it('returns non-sorted entries when the `getAllResults` hack is ' +
-      'absent', cb => {
-      nock(testURLBase).get(searchByIdURL)
-        .reply(200, entryByIdJSONString);
-      nock(testURLBase).get(searchByIdMultipleResultsURL)
-        .reply(200, entryByIdMultipleResultsJSONString);
-
-      dict.getEntries(
-        {
-          filter: {
-            id: [
-              // first id returns one entry (MCCL ontology)
-              'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
-              // second id returns 108 entries! (BFO source ontology)
-              'http://purl.obolibrary.org/obo/BFO_0000002'
-            ],
-            dictID : []
-          },
-          sort: 'dictID',
-          page: 1,
-          perPage: 20
-        }, (err, res) => {
-          expect(err).to.equal(null);
-
-          // make sure that the `getAllResults` hack was not executed
-          expect(res.items.length).to.equal(20);
-
-          // check that there was no entry with the
-          // `BFO` ontology in the 20 results returned
-          const hasBFO = res.items.map(entry => entry.z.dictAbbrev === 'BFO');
-          expect(hasBFO.every(x => x === false)).to.be.true;
-
-          // make sure that the sort by 'dictID' was not done
-          expect(dict.str_cmp(
-            res.items[6].z.dictAbbrev, res.items[7].z.dictAbbrev
-          )).to.equal(1);
-          cb();
-        }
-      );
-    });
-
-    it('returns correct entries when the `getAllResults` hack is enabled ' +
-      'and the `options.sort` is by \'dictID\'', cb => {
-      nock(testURLBase).get(searchByIdHackedURL)
-        .reply(200, entryByIdHackedJSONString);
-      nock(testURLBase).get(searchByIdMultipleResultsHackedURL)
-        .reply(200, entryByIdMultipleResultsHackedJSONString);
-
-      dict.getEntries(
-        {
-          filter: {
-            id: [
-              // first id returns one entry (MCCL ontology)
-              'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
-              // second id returns 108 entries! (BFO source ontology)
-              'http://purl.obolibrary.org/obo/BFO_0000002'
-            ],
-            dictID : []
-          },
-          sort: 'dictID',
-          page: 1,
-          perPage: 20,
-          getAllResults: true
-        }, (err, res) => {
-          expect(err).to.equal(null);
-
-          // make sure that the `getAllResults` hack was executed properly
-          expect(res.items.length).to.equal(109);
-
-          // make sure that the sort by 'dictID' was done and that the source
-          // ontology for the first id was correctly inferred
-          expect(res.items[0].z.dictAbbrev).to.equal('BFO');
-          expect(res.items[1].z.dictAbbrev).to.equal('MCCL');
-          cb();
-        }
-      );
-    });
-
-    it('returns correct entries when the `getAllResults` hack is enabled ' +
-      'and the `options.sort` is by \'id\'', cb => {
-      nock(testURLBase).get(searchByIdHackedURL)
-        .reply(200, entryByIdHackedJSONString);
-      nock(testURLBase).get(searchByIdMultipleResultsHackedURL)
-        .reply(200, entryByIdMultipleResultsHackedJSONString);
-
-      dict.getEntries(
-        {
-          filter: {
-            id: [
-              // first id returns one entry (MCCL ontology)
-              'http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*',
-              // second id returns 108 entries! (BFO source ontology)
-              'http://purl.obolibrary.org/obo/BFO_0000002'
-            ],
-            dictID : []
-          },
-          sort: 'id',
-          page: 1,
-          perPage: 20,
-          getAllResults: true
-        }, (err, res) => {
-          expect(err).to.equal(null);
-
-          // make sure that the `getAllResults` hack was executed properly
-          expect(res.items.length).to.equal(109);
-
-          // make sure that the sort by 'id' was done and that the source
-          // ontology for the first id was correctly inferred
-          expect(res.items[0].id).to.equal('http://purl.obolibrary.org/obo/BFO_0000002');
-          expect(res.items[1].id).to.equal('http://www.semanticweb.org/pallabi.d/ontologies/2014/2/untitled-ontology-11#CXorf36-Glu142*');
-          expect(res.items[0].z.dictAbbrev).to.equal('BFO');
-          cb();
-        }
-      );
     });
   });
 
@@ -854,13 +716,17 @@ describe('DictionaryBioPortal.js', () => {
 
       const expectedResult1 = [
         testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false',
-        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false'
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&display_context=false',
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=&require_exact_match=true&display_context=false'
       ];
       const expectedResult2 = [
-        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=10&display_context=false'
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&page=1&pagesize=10&display_context=false'
       ];
       const expectedResult3 = [
-        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&also_search_obsolete=true&page=2&pagesize=10&display_context=false'
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&also_search_obsolete=true&page=2&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FMEDDRA%2F10053571&ontologies=&require_exact_match=true&page=2&pagesize=10&display_context=false'
       ];
 
       res1.should.deep.equal(expectedResult1);
@@ -890,14 +756,18 @@ describe('DictionaryBioPortal.js', () => {
       const res1 = dict.buildEntryURLs(options);
       const expectedResult1 = [
         testURLBase + '/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FBFO_0000002&ontologies=OGMS,LOINC&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=4&display_context=false',
-        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=OGMS,LOINC&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=4&display_context=false'
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FBFO_0000002&ontologies=OGMS,LOINC&require_exact_match=true&page=1&pagesize=4&display_context=false',
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=OGMS,LOINC&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=4&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=OGMS,LOINC&require_exact_match=true&page=1&pagesize=4&display_context=false'
       ];
 
       options.page = 2;
       const res2 = dict.buildEntryURLs(options);
       const expectedResult2 = [
         testURLBase + '/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FBFO_0000002&ontologies=OGMS,LOINC&require_exact_match=true&also_search_obsolete=true&page=2&pagesize=4&display_context=false',
-        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=OGMS,LOINC&require_exact_match=true&also_search_obsolete=true&page=2&pagesize=4&display_context=false'
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FBFO_0000002&ontologies=OGMS,LOINC&require_exact_match=true&page=2&pagesize=4&display_context=false',
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=OGMS,LOINC&require_exact_match=true&also_search_obsolete=true&page=2&pagesize=4&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.bioontology.org%2Fontology%2FLNC%2FLA14279-6&ontologies=OGMS,LOINC&require_exact_match=true&page=2&pagesize=4&display_context=false'
       ];
 
       res1.should.deep.equal(expectedResult1);
@@ -1294,7 +1164,7 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('mapBioPortalResToEntryObj', () => {
+  describe('mapBioPortalSearchResToEntryObj', () => {
     it('properly maps BioPortal\'s returned JSON object to a VSM entry' +
       'object', cb => {
       // options with no proper `filter.id` proper
@@ -1304,7 +1174,7 @@ describe('DictionaryBioPortal.js', () => {
         }
       };
 
-      const res1 = dict.mapBioPortalResToEntryObj(
+      const res1 = dict.mapBioPortalSearchResToEntryObj(
         JSON.parse(melanoma1resultJSONString), options);
       const expectedResult = [
         {
@@ -1338,7 +1208,7 @@ describe('DictionaryBioPortal.js', () => {
 
       // when quering for an `id`, `z.obsolete` should appear in the result
       options.filter.id = ['http://www.radlex.org/RID/#RID34617'];
-      const res2 = dict.mapBioPortalResToEntryObj(
+      const res2 = dict.mapBioPortalSearchResToEntryObj(
         JSON.parse(melanoma1resultJSONString), options);
       expectedResult[0].z.obsolete = false;
 
@@ -1348,11 +1218,11 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('mapBioPortalResToMatchObj', () => {
+  describe('mapBioPortalSearchResToMatchObj', () => {
     it('properly maps BioPortal\'s returned JSON object to a VSM match' +
       'object', cb => {
 
-      const res = dict.mapBioPortalResToMatchObj(
+      const res = dict.mapBioPortalSearchResToMatchObj(
         JSON.parse(melanoma1resultJSONString), melanomaStr
       );
       const expectedResult = [
@@ -1433,25 +1303,35 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('prepareEntrySearchURL', () => {
+  describe('prepareEntrySearchURLs', () => {
     it('returns proper URL(s) according to 4 of the possible input ' +
       'combinations that are used by buildEntryURLs()', cb => {
-      const url1 = dict.prepareEntrySearchURL({ page: 1, perPage: 2 }, '', []);
-      const url2 = dict.prepareEntrySearchURL({}, '', ['NCIT','GO']);
-      const url3 = dict.prepareEntrySearchURL({},
+      const url1 = dict.prepareEntrySearchURLs({ page: 1, perPage: 2 }, '', []);
+      const url2 = dict.prepareEntrySearchURLs({}, '', ['NCIT','GO']);
+      const url3 = dict.prepareEntrySearchURLs({},
         'http://purl.obolibrary.org/obo/DOID_1909', []);
-      const url4 = dict.prepareEntrySearchURL({ page: 1, perPage: 2 },
+      const url4 = dict.prepareEntrySearchURLs({ page: 1, perPage: 2 },
         'http://purl.obolibrary.org/obo/DOID_1909', ['BAO','DOID']);
 
-      const expectedURL1 = testURLBase + '/search?ontologies=&ontology_types=ONTOLOGY&page=1&pagesize=2&display_context=false';
-      const expectedURL2 = testURLBase + '/search?ontologies=NCIT,GO&ontology_types=ONTOLOGY&display_context=false';
-      const expectedURL3 = testURLBase + '/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false';
-      const expectedURL4 = testURLBase + '/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=BAO,DOID&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=2&display_context=false';
+      const expectedURL1 = [
+        testURLBase + '/search?ontologies=&ontology_types=ONTOLOGY&page=1&pagesize=2&display_context=false'
+      ];
+      const expectedURL2 = [
+        testURLBase + '/search?ontologies=NCIT,GO&ontology_types=ONTOLOGY&display_context=false'
+      ];
+      const expectedURL3 = [
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=&require_exact_match=true&display_context=false'
+      ];
+      const expectedURL4 = [
+        testURLBase + '/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=BAO,DOID&require_exact_match=true&also_search_obsolete=true&page=1&pagesize=2&display_context=false',
+        testURLBase + '/property_search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=BAO,DOID&require_exact_match=true&page=1&pagesize=2&display_context=false'
+      ];
 
-      url1.should.equal(expectedURL1);
-      url2.should.equal(expectedURL2);
-      url3.should.equal(expectedURL3);
-      url4.should.equal(expectedURL4);
+      url1.should.deep.equal(expectedURL1);
+      url2.should.deep.equal(expectedURL2);
+      url3.should.deep.equal(expectedURL3);
+      url4.should.deep.equal(expectedURL4);
 
       cb();
     });
@@ -1578,20 +1458,9 @@ describe('DictionaryBioPortal.js', () => {
 
   describe('getIDsFromMatchObjArray', () => {
     it('returns all the unique ids from an array of vsm-match objects', cb => {
-      let arr = [
-        {
-          id: 'id1',
-          str: 'str1'
-        },
-        {
-          id: 'id2',
-          str: 'str2'
-        },
-        {
-          id: 'id3',
-          str: 'str3'
-        }
-      ];
+      let arr = [{ id: 'id1', str: 'str1' },
+        { id: 'id2', str: 'str2' },
+        { id: 'id3', str: 'str3' }];
 
       const res1 = dict.getIDsFromMatchObjArray(arr);
 
@@ -1614,16 +1483,7 @@ describe('DictionaryBioPortal.js', () => {
     it('returns an empty array when input is either an empty array ' +
       'or an array whose elements don\'t have the `id` property', cb => {
       const arr1 = [];
-      const arr2 = [
-        {
-          dictID: 'id1',
-          str: 'str1'
-        },
-        {
-          dictID: 'id2',
-          str: 'str2'
-        }
-      ];
+      const arr2 = [{ dictID: 'id1', str: 'str1' }, { dictID: 'id2', str: 'str2'}];
 
       const res1 = dict.getIDsFromMatchObjArray(arr1);
       const res2 = dict.getIDsFromMatchObjArray(arr2);
@@ -1635,20 +1495,8 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns proper result when the input array has \'mixed\' elements ' +
       '- some that have the `id` property and some that don\'t', cb => {
-      const arr = [
-        {
-          id: 'id1',
-          str: 'str1'
-        },
-        {
-          dictID: 'id2',
-          str: 'str2'
-        },
-        {
-          id: 'id3',
-          str: 'str3'
-        }
-      ];
+      const arr = [{ id: 'id1', str: 'str1' }, { dictID: 'id2', str: 'str2' },
+        { id: 'id3', str: 'str3' }];
 
       const res = dict.getIDsFromMatchObjArray(arr);
       const expectedResult = ['id1', 'id3'];
@@ -1890,32 +1738,10 @@ describe('DictionaryBioPortal.js', () => {
     });
 
     it('returns the same array when no re-arrangement was done', cb => {
-      const arr = [
-        {
-          id: 'id1',
-          z: {
-            dictAbbrev: 'LNC'
-          }
-        },
-        {
-          id: 'id2',
-          z: {
-            dictAbbrev: 'CLO'
-          }
-        },
-        {
-          id: 'id3',
-          z: {
-            dictAbbrev: 'MO'
-          }
-        },
-        {
-          id: 'id4',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        }
-      ];
+      const arr = [ { id: 'id1', z: { dictAbbrev: 'LNC' }},
+        { id: 'id2', z: { dictAbbrev: 'CLO' }},
+        { id: 'id3', z: { dictAbbrev: 'MO' }},
+        { id: 'id4', z: { dictAbbrev: 'RADLEX' }}];
 
       const arrCloned = JSON.parse(JSON.stringify(arr));
 
@@ -1927,176 +1753,72 @@ describe('DictionaryBioPortal.js', () => {
       'with the same ids and for which we may or may not be able to ' +
       'correctly infer the source ontology', cb => {
       const arr1 = [
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'CLO'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MO'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'LNC'
-          }
-        },
-        {
-          id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        }
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'CLO' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MO' }},
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'LNC' }},
+        { id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
+          z: { dictAbbrev: 'RADLEX' }}
       ];
+
       const arr2 = [
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'GO'
-          }
-        },
-        {
-          id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
-          z: {
-            dictAbbrev: 'MG'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'CLO'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDDRA'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'LNC'
-          }
-        },
-        {
-          id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        }
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'GO' }},
+        { id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
+          z: { dictAbbrev: 'MG' }},
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'CLO' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDDRA' }},
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'LNC' }},
+        { id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }}
       ];
+
       const arr3 = [
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'A'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'B'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'C'
-          }
-        },
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        }
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'A' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'B' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'C' }},
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }}
       ];
+
       const arr4 = [
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'A'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'B'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'C'
-          }
-        }
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'A' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'B' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'C' }}
       ];
+
       const arr5 = [
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'A'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'B'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'C'
-          }
-        }
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'A' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'B'}},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'C' }}
       ];
 
       const res1 = dict.reArrangeEntries(arr1);
@@ -2106,145 +1828,61 @@ describe('DictionaryBioPortal.js', () => {
       const res5 = dict.reArrangeEntries(arr5);
 
       const expectedResult1 = [
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'LNC'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MO'
-          }
-        },
-        {
-          id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'CLO'
-          }
-        }
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'LNC' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MO' }},
+        { id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'CLO' }}
       ];
+
       const expectedResult2 = [
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'GO'
-          }
-        },
-        {
-          id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
-          z: {
-            dictAbbrev: 'MG'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'LNC'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
-          z: {
-            dictAbbrev: 'CLO'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDDRA'
-          }
-        },
-        {
-          id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        }
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'GO' }},
+        { id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
+          z: { dictAbbrev: 'MG' }},
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'LNC' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://purl.bioontology.org/ontology/LNC/LA14279-6',
+          z: { dictAbbrev: 'CLO' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDDRA' }},
+        { id: 'http://mged.sourceforge.net/ontologies/MGEDOntology.owl#BioMaterial',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }}
       ];
+
       const expectedResult3 = [
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'A'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'B'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'C'
-          }
-        }
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'A' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'B' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'C' }}
       ];
+
       const expectedResult4 = [
-        {
-          id: 'http://www.radlex.org/RID/#RID34617',
-          z: {
-            dictAbbrev: 'RADLEX'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'MEDLINEPLUS'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'A'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'B'
-          }
-        },
-        {
-          id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
-          z: {
-            dictAbbrev: 'C'
-          }
-        }
+        { id: 'http://www.radlex.org/RID/#RID34617',
+          z: { dictAbbrev: 'RADLEX' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'MEDLINEPLUS' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'A' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'B' }},
+        { id: 'http://purl.bioontology.org/ontology/MEDLINEPLUS/C0025202',
+          z: { dictAbbrev: 'C' }}
       ];
+
       const expectedResult5 = expectedResult3;
 
       res1.should.deep.equal(expectedResult1);
