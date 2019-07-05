@@ -269,8 +269,3 @@ BioPortal entry's property | Type | Required | VSM match object property | Notes
 `links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
 `cui` | Array | NO | `z.cui` | Concept Unique Identifier
 `semanticType` | Array | NO | `z.tui` | Type Unique Identifier
-
-## Documentation
-
-You can view this *README* in gitbook format 
-[here](https://vsmjs.github.io/vsm-dictionary-bioportal/).
