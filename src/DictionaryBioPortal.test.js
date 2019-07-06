@@ -19,18 +19,26 @@ describe('DictionaryBioPortal.js', () => {
   const noContext2 = '?display_context=false';
   const melanomaStr = 'melanoma';
   const searchStr = '/search?q=';
+  const propertySearchStr = '/property_search?q=';
   const noResultsStr = 'somethingThatDoesNotExist';
   const numberStr = '5';
   const refStr = 'it';
 
   const melanomaURL = searchStr + melanomaStr + noContext;
-  const melanomaURLWithFilteredDicts = searchStr + melanomaStr +
-    '&ontologies=RADLEX,MCCL,VO' + noContext;
+  const melanomaPropertyURL = propertySearchStr + melanomaStr + noContext;
+  const melanomaURLWithFilteredDicts = searchStr + melanomaStr
+    + '&ontologies=RADLEX,MCCL,VO' + noContext;
+  const melanomaPropertyURLWithFilteredDicts = propertySearchStr + melanomaStr
+    + '&ontologies=RADLEX,MCCL,VO' + noContext;
   const searchNumURL = searchStr + numberStr + noContext;
+  const searchNumPropertyURL = propertySearchStr + numberStr + noContext;
   const searchRefURL = searchStr + refStr + noContext;
+  const searchRefPropertyURL = propertySearchStr + refStr + noContext;
   const noResultsURL = searchStr + noResultsStr + noContext;
+  const noResultsPropertyURL = propertySearchStr + noResultsStr + noContext;
   const searchGOontologyURL = '/ontologies/GO' + noContext2;
   const errorNonValidAcronymURL1 = '/search?q=a&ontologies=NonValidAcronym' + noContext;
+  const errorNonValidAcronymURL1Property = '/property_search?q=a&ontologies=NonValidAcronym' + noContext;
   const errorNonValidAcronymURL2 = '/ontologies/nonValidAcronym' + noContext2;
 
   const jsonMelanoma5resultsPath = path.join(__dirname, '..',
@@ -377,6 +385,11 @@ describe('DictionaryBioPortal.js', () => {
     it('calls its URL, with no apiKey given as an option', cb => {
       nock(testURLBase).get(melanomaURL)
         .reply(401, notValidAPIkeyJSONString);
+      // to make the test pass, we give a 'no results' answer
+      // to the property search query
+      nock(testURLBase).get(melanomaPropertyURL)
+        .reply(200, melanomaNoResultsJSONString);
+
       dictNoApiKey.getEntryMatchesForString(melanomaStr, {}, (err, res) => {
         err.should.deep.equal({
           status: 401,
@@ -391,6 +404,11 @@ describe('DictionaryBioPortal.js', () => {
       'query', cb => {
       nock(testURLBase).get(errorNonValidAcronymURL1)
         .reply(404, errorNonValidAcronymURL1JSONString);
+      // to make the test pass, we give a 'no results' answer
+      // to the property search query
+      nock(testURLBase).get(errorNonValidAcronymURL1Property)
+        .reply(200, melanomaNoResultsJSONString);
+
       dict.getEntryMatchesForString('a', { filter: { dictID : [
         testURLBase + '/ontologies/NonValidAcronym'
       ]}},(err, res) => {
@@ -409,6 +427,9 @@ describe('DictionaryBioPortal.js', () => {
       'does not return any result entry', cb => {
       nock(testURLBase).get(noResultsURL)
         .reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(noResultsPropertyURL)
+        .reply(200, melanomaNoResultsJSONString);
+
       dict.getEntryMatchesForString(noResultsStr, {}, (err, res) => {
         expect(err).to.equal(null);
         res.should.deep.equal({ items: [] });
@@ -429,6 +450,10 @@ describe('DictionaryBioPortal.js', () => {
         'and returns proper vsm match objects', cb => {
       nock(testURLBase).get(melanomaURL)
         .reply(200, melanoma5resultsJSONString);
+      // we hypothesize that the property search returned no results
+      nock(testURLBase).get(melanomaPropertyURL)
+        .reply(200, melanomaNoResultsJSONString);
+
       dict.getEntryMatchesForString(melanomaStr, {}, (err, res) => {
         expect(err).to.equal(null);
         res.should.deep.equal({ items: matchObjArray });
@@ -441,6 +466,10 @@ describe('DictionaryBioPortal.js', () => {
       'vsm match objects', cb => {
       nock(testURLBase).get(melanomaURLWithFilteredDicts)
         .reply(200, melanoma3resultsJSONString);
+      // we hypothesize that the property search returned no results
+      nock(testURLBase).get(melanomaPropertyURLWithFilteredDicts)
+        .reply(200, melanomaNoResultsJSONString);
+
       dict.getEntryMatchesForString(melanomaStr,
         {
           filter: { dictID:
@@ -464,6 +493,11 @@ describe('DictionaryBioPortal.js', () => {
         .reply(200, melanoma3resultsJSONString);
       nock(testURLBase).get(melanomaURL)
         .reply(200, melanoma5resultsJSONString);
+      // we hypothesize that the property search queries returned no results
+      nock(testURLBase).get(melanomaPropertyURLWithFilteredDicts)
+        .reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(melanomaPropertyURL)
+        .reply(200, melanomaNoResultsJSONString);
 
       // manually build the result array of objects
       const expectedFilteredResult = JSON.parse(
@@ -499,9 +533,12 @@ describe('DictionaryBioPortal.js', () => {
 
   describe('getMatchesForString', () => {
     it('lets the parent class add a number-string match', cb => {
-      // we hypothesize the the server sends an empty results object
+      // we hypothesize that the BioPortal server sends empty results
       nock(testURLBase).get(searchNumURL)
         .reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(searchNumPropertyURL)
+        .reply(200, melanomaNoResultsJSONString);
+
       dict.getMatchesForString(numberStr, {}, (err, res) => {
         res.should.deep.equal(
           {
@@ -512,9 +549,12 @@ describe('DictionaryBioPortal.js', () => {
     });
 
     it('lets the parent class add a default refTerm match', cb => {
-      // we hypothesize the the server sends an empty results object
+      // we hypothesize that the BioPortal server sends empty results
       nock(testURLBase).get(searchRefURL)
         .reply(200, melanomaNoResultsJSONString);
+      nock(testURLBase).get(searchRefPropertyURL)
+        .reply(200, melanomaNoResultsJSONString);
+
       dict.getMatchesForString('it', {}, (err, res) => {
         res.should.deep.equal(
           {
@@ -688,7 +728,7 @@ describe('DictionaryBioPortal.js', () => {
       cb();
     });
 
-    it('returns proper URL(s) asking for specific entry objects when ' +
+    it('returns proper URLs asking for specific entry objects when ' +
       'the `filter.id` is in proper format and `filter.dictID` is not', cb => {
       const options1 = {
         filter: {
@@ -735,7 +775,7 @@ describe('DictionaryBioPortal.js', () => {
       cb();
     });
 
-    it('returns proper URL(s) asking for specific entry objects when ' +
+    it('returns proper URLs asking for specific entry objects when ' +
       'both the `filter.id` and the `filter.dictID` are in proper format', cb => {
       const options = {
         filter: {
@@ -778,7 +818,7 @@ describe('DictionaryBioPortal.js', () => {
   });
 
   describe('buildMatchURLs', () => {
-    it('returns one URL only when there is neither `options.filter` and ' +
+    it('returns two URLs when there is neither `options.filter` and ' +
       '`options.sort` given, no matter the page asked', cb => {
       const options = {
         filter: { dictID : [] },
@@ -790,13 +830,15 @@ describe('DictionaryBioPortal.js', () => {
 
       const res1 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult1 = [
-        testURLBase + '/search?q=melanoma&page=1&pagesize=20&display_context=false'
+        testURLBase + '/search?q=melanoma&page=1&pagesize=20&display_context=false',
+        testURLBase + '/property_search?q=melanoma&page=1&pagesize=20&display_context=false'
       ];
 
       options.page = 20;
       const res2 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult2 = [
-        testURLBase + '/search?q=melanoma&page=20&pagesize=20&display_context=false'
+        testURLBase + '/search?q=melanoma&page=20&pagesize=20&display_context=false',
+        testURLBase + '/property_search?q=melanoma&page=20&pagesize=20&display_context=false'
       ];
 
       res1.should.deep.equal(expectedResult1);
@@ -804,7 +846,7 @@ describe('DictionaryBioPortal.js', () => {
       cb();
     });
 
-    it('returns one URL only when `options.filter` is given but no ' +
+    it('returns two URLs when `options.filter` is given but no ' +
       '`options.sort`', cb => {
       const options = {
         filter: { dictID : [
@@ -820,13 +862,15 @@ describe('DictionaryBioPortal.js', () => {
 
       const res1 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult1 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,B,C&page=1&pagesize=20&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,B,C&page=1&pagesize=20&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&page=1&pagesize=20&display_context=false'
       ];
 
       options.page = 20;
       const res2 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult2 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,B,C&page=20&pagesize=20&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,B,C&page=20&pagesize=20&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&page=20&pagesize=20&display_context=false'
       ];
 
       res1.should.deep.equal(expectedResult1);
@@ -834,7 +878,7 @@ describe('DictionaryBioPortal.js', () => {
       cb();
     });
 
-    it('returns proper URL(s) when `options.sort` is given but no ' +
+    it('returns proper URLs when `options.sort` is given but no ' +
       '`options.filter`, based on the `options.page` value', cb => {
       const options = {
         filter: { dictID : [] },
@@ -850,20 +894,25 @@ describe('DictionaryBioPortal.js', () => {
       const res1 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult1 = [
         testURLBase + '/search?q=melanoma&ontologies=A,B,C&page=1&display_context=false',
-        testURLBase + '/search?q=melanoma&page=1&display_context=false'
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&page=1&display_context=false',
+        testURLBase + '/search?q=melanoma&page=1&display_context=false',
+        testURLBase + '/property_search?q=melanoma&page=1&display_context=false'
       ];
 
       options.page = 2;
       const res2 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult2 = [
-        testURLBase + '/search?q=melanoma&page=2&display_context=false'
+        testURLBase + '/search?q=melanoma&page=2&display_context=false',
+        testURLBase + '/property_search?q=melanoma&page=2&display_context=false'
       ];
 
       delete options.page;
       const res3 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult3 = [
         testURLBase + '/search?q=melanoma&ontologies=A,B,C&display_context=false',
-        testURLBase + '/search?q=melanoma&display_context=false'
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&display_context=false',
+        testURLBase + '/search?q=melanoma&display_context=false',
+        testURLBase + '/property_search?q=melanoma&display_context=false'
       ];
 
       res1.should.deep.equal(expectedResult1);
@@ -872,7 +921,7 @@ describe('DictionaryBioPortal.js', () => {
       cb();
     });
 
-    it('returns proper URL(s) when both `options.sort` and `options.filter` ' +
+    it('returns proper URLs when both `options.sort` and `options.filter` ' +
       'are given, based on the `options.page` value', cb => {
       const options = {
         filter: { dictID : [
@@ -892,7 +941,9 @@ describe('DictionaryBioPortal.js', () => {
       const res1 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult1 = [
         testURLBase + '/search?q=melanoma&ontologies=A&page=1&pagesize=20&display_context=false',
-        testURLBase + '/search?q=melanoma&ontologies=B,C&page=1&pagesize=20&display_context=false'
+        testURLBase + '/property_search?q=melanoma&ontologies=A&page=1&pagesize=20&display_context=false',
+        testURLBase + '/search?q=melanoma&ontologies=B,C&page=1&pagesize=20&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=B,C&page=1&pagesize=20&display_context=false'
       ];
 
       // filter.dictID = {A,B,C}, sort.dictID = {A,C}, no page
@@ -902,7 +953,9 @@ describe('DictionaryBioPortal.js', () => {
       const res2 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult2 = [
         testURLBase + '/search?q=melanoma&ontologies=A,C&pagesize=10&display_context=false',
-        testURLBase + '/search?q=melanoma&ontologies=B&pagesize=10&display_context=false'
+        testURLBase + '/property_search?q=melanoma&ontologies=A,C&pagesize=10&display_context=false',
+        testURLBase + '/search?q=melanoma&ontologies=B&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=B&pagesize=10&display_context=false'
       ];
 
       // filter.dictID = {A,B,C,D}, sort.dictID = {A,C}, page = 2
@@ -910,14 +963,16 @@ describe('DictionaryBioPortal.js', () => {
       options.page = 2;
       const res3 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult3 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,C,B,D&page=2&pagesize=10&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,C,B,D&page=2&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,C,B,D&page=2&pagesize=10&display_context=false'
       ];
 
       // filter.dictID = {A,B}, sort.dictID = {A,C}, page = 2
       options.filter.dictID = options.filter.dictID.splice(0,2);
       const res4 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult4 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,B&page=2&pagesize=10&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,B&page=2&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B&page=2&pagesize=10&display_context=false'
       ];
 
       // filter.dictID = {A,B,F}, sort.dictID = {A,C}, page = 3
@@ -925,7 +980,8 @@ describe('DictionaryBioPortal.js', () => {
       options.page = 3;
       const res5 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult5 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,B,F&page=3&pagesize=10&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,B,F&page=3&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,F&page=3&pagesize=10&display_context=false'
       ];
 
       // filter.dictID = {A,B,F}, sort.dictID = {A,C}, no page
@@ -933,7 +989,9 @@ describe('DictionaryBioPortal.js', () => {
       const res6 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult6 = [
         testURLBase + '/search?q=melanoma&ontologies=A&pagesize=10&display_context=false',
-        testURLBase + '/search?q=melanoma&ontologies=B,F&pagesize=10&display_context=false'
+        testURLBase + '/property_search?q=melanoma&ontologies=A&pagesize=10&display_context=false',
+        testURLBase + '/search?q=melanoma&ontologies=B,F&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=B,F&pagesize=10&display_context=false'
       ];
 
       // filter.dictID = {A,B,F}, sort.dictID = {A,B,F}, no page
@@ -942,13 +1000,15 @@ describe('DictionaryBioPortal.js', () => {
       options.sort.dictID.push('http://test/ontologies/F');
       const res7 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult7 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,B,F&pagesize=10&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,B,F&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,F&pagesize=10&display_context=false'
       ];
 
       options.page = 20;
       const res8 = dict.buildMatchURLs(melanomaStr, options);
       const expectedResult8 = [
-        testURLBase + '/search?q=melanoma&ontologies=A,B,F&page=20&pagesize=10&display_context=false'
+        testURLBase + '/search?q=melanoma&ontologies=A,B,F&page=20&pagesize=10&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,F&page=20&pagesize=10&display_context=false'
       ];
 
       // filter.dictID = {A,B,F}, sort.dictID = {A,B,F,G}, page 20
@@ -1340,56 +1400,96 @@ describe('DictionaryBioPortal.js', () => {
   describe('prepareMatchStringSearchURL', () => {
     it('returns proper url when ontologiesArray is empty', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, {}, []);
-      url.should.equal(testURLBase + '/search?q=melanoma&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&display_context=false',
+        testURLBase + '/property_search?q=melanoma&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when ontologiesArray is non-empty', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, {}, ['A','B','C']);
-      url.should.equal(testURLBase + '/search?q=melanoma&ontologies=A,B,C&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&ontologies=A,B,C&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when the page property is not a number', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, { page : 'String' }, []);
-      url.should.equal(testURLBase + '/search?q=melanoma&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&display_context=false',
+        testURLBase + '/property_search?q=melanoma&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when the page property is a non-valid integer', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, { page : 0 }, []);
-      url.should.equal(testURLBase + '/search?q=melanoma&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&display_context=false',
+        testURLBase + '/property_search?q=melanoma&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when the page property is a valid integer', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, { page : 2 }, ['A']);
-      url.should.equal(testURLBase + '/search?q=melanoma&ontologies=A&page=2&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&ontologies=A&page=2&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A&page=2&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when the perPage property is not a number', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, { perPage : ['Str'] }, []);
-      url.should.equal(testURLBase + '/search?q=melanoma&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&display_context=false',
+        testURLBase + '/property_search?q=melanoma&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when the perPage property is a non-valid integer', cb => {
       const url = dict.prepareMatchStringSearchURL(
         melanomaStr, { perPage : 0 }, []);
-      url.should.equal(testURLBase + '/search?q=melanoma&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&display_context=false',
+        testURLBase + '/property_search?q=melanoma&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
 
     it('returns proper url when the perPage property is a valid integer', cb => {
       const url = dict.prepareMatchStringSearchURL(melanomaStr, { perPage : 1 }, ['A','B']);
-      url.should.equal(testURLBase + '/search?q=melanoma&ontologies=A,B&pagesize=1&display_context=false');
+      const expectedURL = [
+        testURLBase + '/search?q=melanoma&ontologies=A,B&pagesize=1&display_context=false',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B&pagesize=1&display_context=false'
+      ];
+
+      url.should.deep.equal(expectedURL);
       cb();
     });
   });
 
   describe('pruneCommonResultsById', () => {
-    it('doesn\'t prune input map if it does not have 2 URLs', cb => {
+    it('doesn\'t prune input map if it does not have 4 URLs', cb => {
       const urlToResultsMap = new Map();
       dict.pruneCommonResultsById(urlToResultsMap)
         .should.deep.equal(urlToResultsMap);
@@ -1408,18 +1508,33 @@ describe('DictionaryBioPortal.js', () => {
 
     it('doesn\'t prune input map if there are no common results', cb => {
       const urlToResultsMap = new Map();
+
       const url1 = testURLBase + '/search?q=melanoma&ontologies=A&page=1&display_context=false';
+      const url2 = testURLBase + '/property_search?q=melanoma&ontologies=A&page=1&display_context=false';
+      const url3 = testURLBase + '/search?q=melanoma&ontologies=B&page=1&display_context=false';
+      const url4 = testURLBase + '/property_search?q=melanoma&ontologies=B&page=1&display_context=false';
+
       const res1 = [
         { id: 'id1', dictID: 'http://data.bioontology.org/ontologies/A' },
         { id: 'id2', dictID: 'http://data.bioontology.org/ontologies/A' }
       ];
-      const url2 = testURLBase + '/search?q=melanoma&ontologies=B&page=1&display_context=false';
       const res2 = [
-        { id: 'id3', dictID: 'http://data.bioontology.org/ontologies/B' },
-        { id: 'id4', dictID: 'http://data.bioontology.org/ontologies/B' }
+        { id: 'id3', dictID: 'http://data.bioontology.org/ontologies/A' },
+        { id: 'id4', dictID: 'http://data.bioontology.org/ontologies/A' }
       ];
+      const res3 = [
+        { id: 'id5', dictID: 'http://data.bioontology.org/ontologies/B' },
+        { id: 'id6', dictID: 'http://data.bioontology.org/ontologies/B' }
+      ];
+      const res4 = [
+        { id: 'id7', dictID: 'http://data.bioontology.org/ontologies/B' },
+        { id: 'id8', dictID: 'http://data.bioontology.org/ontologies/B' }
+      ];
+
       urlToResultsMap.set(url1, res1);
       urlToResultsMap.set(url2, res2);
+      urlToResultsMap.set(url3, res3);
+      urlToResultsMap.set(url4, res4);
 
       dict.pruneCommonResultsById(urlToResultsMap)
         .should.deep.equal(urlToResultsMap);
@@ -1429,26 +1544,51 @@ describe('DictionaryBioPortal.js', () => {
     it('correctly prunes input map when there are common results', cb => {
       const urlToResultsMap = new Map();
       const url1 = testURLBase + '/search?q=melanoma&ontologies=A&page=1&display_context=false';
+      const url2 = testURLBase + '/property_search?q=melanoma&ontologies=A&page=1&display_context=false';
+      const url3 = testURLBase + '/search?q=melanoma&page=1&display_context=false';
+      const url4 = testURLBase + '/property_search?q=melanoma&page=1&display_context=false';
+
       const res1 = [
         { id: 'id1', dictID: 'http://data.bioontology.org/ontologies/A' },
         { id: 'id2', dictID: 'http://data.bioontology.org/ontologies/A' },
         { id: 'id3', dictID: 'http://data.bioontology.org/ontologies/A' }
       ];
-      const url2 = testURLBase + '/search?q=melanoma&page=1&display_context=false';
       const res2 = [
+        { id: 'id5', dictID: 'http://data.bioontology.org/ontologies/A' },
+        { id: 'id6', dictID: 'http://data.bioontology.org/ontologies/A' },
+        { id: 'id7', dictID: 'http://data.bioontology.org/ontologies/A' }
+      ];
+      const res3 = [
         { id: 'id2', dictID: 'http://data.bioontology.org/ontologies/B' },
         { id: 'id1', dictID: 'http://data.bioontology.org/ontologies/C' },
         { id: 'id4', dictID: 'http://data.bioontology.org/ontologies/D' }
       ];
+      const res4 = [
+        { id: 'id7', dictID: 'http://data.bioontology.org/ontologies/E' },
+        { id: 'id8', dictID: 'http://data.bioontology.org/ontologies/F' },
+        { id: 'id6', dictID: 'http://data.bioontology.org/ontologies/G' }
+      ];
+
       urlToResultsMap.set(url1, res1);
       urlToResultsMap.set(url2, res2);
+      urlToResultsMap.set(url3, res3);
+      urlToResultsMap.set(url4, res4);
 
       const expectedUrlToResultsMap = new Map();
-      expectedUrlToResultsMap.set(url1, res1);
-      const prunedRes = [
+
+      const prunedRes3 = [
         { id: 'id4', dictID: 'http://data.bioontology.org/ontologies/D' }
       ];
-      expectedUrlToResultsMap.set(url2, prunedRes);
+      const prunedRes4 = [
+        { id: 'id8', dictID: 'http://data.bioontology.org/ontologies/F' }
+      ];
+
+      // First two results unchanged
+      expectedUrlToResultsMap.set(url1, res1);
+      expectedUrlToResultsMap.set(url2, res2);
+      // Last two results pruned
+      expectedUrlToResultsMap.set(url3, prunedRes3);
+      expectedUrlToResultsMap.set(url4, prunedRes4);
 
       const actualUrlToResultsMap = dict.pruneCommonResultsById(urlToResultsMap);
       actualUrlToResultsMap.should.deep.equal(expectedUrlToResultsMap);

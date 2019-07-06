@@ -14,6 +14,7 @@ dict.getEntryMatchesForString('melanoma',
     'http://data.bioontology.org/ontologies/RH-MESH',
     'http://data.bioontology.org/ontologies/MCCL',
     'http://data.bioontology.org/ontologies/MEDDRA'
+    //'http://data.bioontology.org/ontologies/OBOREL'
   ]},
   sort: { dictID : ['http://data.bioontology.org/ontologies/MCCL'] },
   page: 1,

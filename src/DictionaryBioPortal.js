@@ -130,7 +130,8 @@ module.exports = class DictionaryBioPortal extends Dictionary {
             arr = arr.concat(entryObjArray);
 
           // Sort only if the request was for specific id(s)
-          // and getAllResults hack is enabled
+          // and getAllResults hack is enabled (disabled because
+          // of the existence of common IDs between ontologies)
           /*if (
             options.getAllResults
             && this.hasProperFilterIDProperty(options)
@@ -171,16 +172,41 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
       this.request(url, (err, res) => {
         if (err) return cb(err);
-        urlToResultsMap.set(url, this.mapBioPortalSearchResToMatchObj(res, str));
+
+        if (url.includes('/property_search'))
+          urlToResultsMap.set(
+            url, this.mapBioPortalPropertySearchResToMatchObj(res, str)
+          );
+        else
+          urlToResultsMap.set(
+            url, this.mapBioPortalSearchResToMatchObj(res, str)
+          );
 
         --callsRemaining;
-        // all calls have returned, so prune, sort and trim results
+        // all calls have returned, so merge, prune, sort and trim results
         if (callsRemaining <= 0) {
           urlToResultsMap = this.pruneCommonResultsById(urlToResultsMap);
 
+          // merge results when there are 2 or 4 URLs (group them as
+          // 'preferred' vs 'rest' ontologies - no matter if they come
+          // from a `/search` or a `/property_search` endpoint query)
+          let mergedMatchObjArrays = Array.from(urlToResultsMap.values());
+          if (urlToResultsMap.size === 2) {
+            mergedMatchObjArrays = [
+              mergedMatchObjArrays[0].concat(mergedMatchObjArrays[1])
+            ];
+          } else if (urlToResultsMap.size === 4) {
+            // 'preferred' results
+            let preferredOntologyRes = mergedMatchObjArrays[0]
+              .concat(mergedMatchObjArrays[1]);
+            let restOntologyRes      = mergedMatchObjArrays[2]
+              .concat(mergedMatchObjArrays[3]);
+            mergedMatchObjArrays = [preferredOntologyRes, restOntologyRes];
+          } // size == 1 (do nothing)
+
           // gather all results in one array, sort and z-prune them
           let arr = [];
-          for (let matchObjArray of urlToResultsMap.values()) {
+          for (let matchObjArray of mergedMatchObjArrays) {
             arr = arr.concat(this.sortMatches(
               Dictionary.zPropPrune(matchObjArray, options.z))
             );
@@ -245,27 +271,26 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     const rest = this.getDictAcronymsFromArray(obj.rest);
 
     if (pref.length === 0 && rest.length === 0)
-      return [this.prepareMatchStringSearchURL(str, options, [])];
+      return this.prepareMatchStringSearchURL(str, options, []);
     else if (pref.length === 0 && rest.length !== 0)
-      return [this.prepareMatchStringSearchURL(str, options, rest)];
+      return this.prepareMatchStringSearchURL(str, options, rest);
     else if (pref.length !== 0 && rest.length === 0) {
       if (
         !options.hasOwnProperty('page')
         || this.hasPagePropertyEqualToOne(options)
       )
-        return [this.prepareMatchStringSearchURL(str, options, pref)]
-          .concat([this.prepareMatchStringSearchURL(str, options, [])]);
-      else return [this.prepareMatchStringSearchURL(str, options, [])];
+        return this.prepareMatchStringSearchURL(str, options, pref)
+          .concat(this.prepareMatchStringSearchURL(str, options, []));
+      else return this.prepareMatchStringSearchURL(str, options, []);
     } else if (pref.length !== 0 && rest.length !== 0) {
       if (
         !options.hasOwnProperty('page')
         || this.hasPagePropertyEqualToOne(options)
       )
-        return [this.prepareMatchStringSearchURL(str, options, pref)]
-          .concat([this.prepareMatchStringSearchURL(str, options, rest)]);
-      else return [
-        this.prepareMatchStringSearchURL(str, options, pref.concat(rest))
-      ];
+        return this.prepareMatchStringSearchURL(str, options, pref)
+          .concat(this.prepareMatchStringSearchURL(str, options, rest));
+      else
+        return this.prepareMatchStringSearchURL(str, options, pref.concat(rest));
     }
   }
 
@@ -332,7 +357,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
         && {
           descr: entry.definition[0] // take just the first definition
         }),
-      terms: this.getTerms(entry.prefLabel, entry.synonym),
+      terms: this.getTermsFromSearch(entry.prefLabel, entry.synonym),
       z: {
         dictAbbrev: entry.links.ontology.split('/').pop(),
         ...((typeof entry.cui !== 'undefined')
@@ -352,21 +377,6 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }));
   }
 
-  mapBioPortalPropertySearchResToEntryObj(res) {
-    return res.collection.map(entry => ({
-      id: entry['@id'],
-      dictID: entry.links.ontology,
-      ...((typeof entry.definition !== 'undefined')
-        && {
-          descr: entry.definition[0] // take just the first definition
-        }),
-      terms: entry.label.map(label => ({ str: label })),
-      z: {
-        dictAbbrev: entry.links.ontology.split('/').pop()
-      }
-    }));
-  }
-
   mapBioPortalSearchResToMatchObj(res, str) {
     return res.collection.map(entry => ({
       id: entry['@id'],
@@ -377,7 +387,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           descr: entry.definition[0] // take just the first definition
         }),
       type: entry.prefLabel.startsWith(str) ? 'S' : 'T',
-      terms: this.getTerms(entry.prefLabel, entry.synonym),
+      terms: this.getTermsFromSearch(entry.prefLabel, entry.synonym),
       z: {
         dictAbbrev: entry.links.ontology.split('/').pop(),
         ...((typeof entry.cui !== 'undefined')
@@ -392,21 +402,54 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     }));
   }
 
-  mapBioPortalPropertySearchResToMatchObj(res, str) {
+  mapBioPortalPropertySearchResToEntryObj(res) {
     return res.collection.map(entry => ({
       id: entry['@id'],
       dictID: entry.links.ontology,
-      str: entry.label[0],
       ...((typeof entry.definition !== 'undefined')
         && {
           descr: entry.definition[0] // take just the first definition
         }),
-      type: entry.label.startsWith(str) ? 'S' : 'T',
-      terms: entry.label.map(label => ({ str: label })),
+      terms: this.getTermsFromPropertySearch(entry.label, entry.labelGenerated),
       z: {
         dictAbbrev: entry.links.ontology.split('/').pop()
       }
     }));
+  }
+
+  mapBioPortalPropertySearchResToMatchObj(res, str) {
+    return res.collection.map(entry => ({
+      id: entry['@id'],
+      dictID: entry.links.ontology,
+      str: this.getStr(entry.label, entry.labelGenerated),
+      ...((typeof entry.definition !== 'undefined')
+        && {
+          descr: entry.definition[0] // take just the first definition
+        }),
+      type: this.getType(entry.label, entry.labelGenerated, str),
+      terms: this.getTermsFromPropertySearch(entry.label, entry.labelGenerated),
+      z: {
+        dictAbbrev: entry.links.ontology.split('/').pop()
+      }
+    }));
+  }
+
+  getStr(labelArr, labelGeneratedArr) {
+    return (typeof (labelArr) !== 'undefined')
+      ? labelArr[0]
+      : labelGeneratedArr[0];
+  }
+
+  getType(labelArr, labelGeneratedArr, str) {
+    return (typeof (labelArr) !== 'undefined')
+      ? labelArr[0].startsWith(str) ? 'S' : 'T'
+      : labelGeneratedArr[0].startsWith(str) ? 'S' : 'T';
+  }
+
+  getTermsFromPropertySearch(labelArr, labelGeneratedArr) {
+    return (typeof (labelArr) !== 'undefined')
+      ? labelArr.map(label => ({ str: label }))
+      : labelGeneratedArr.map(label => ({ str: label }));
   }
 
   getDictAcronymsFromArray(arr) {
@@ -471,27 +514,35 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   prepareMatchStringSearchURL(str, options, ontologiesArray) {
-    let url = this.urlGetMatches
+    let searchURL = this.urlGetMatches
+      .replace('$queryString', this.fixedEncodeURIComponent(str));
+    let propertySearchURL = this.urlGetMatchesFromProperties
       .replace('$queryString', this.fixedEncodeURIComponent(str));
 
-    if (ontologiesArray.length !== 0)
-      url += '&ontologies=' + ontologiesArray.toString();
+    if (ontologiesArray.length !== 0) {
+      searchURL += '&ontologies=' + ontologiesArray.toString();
+      propertySearchURL += '&ontologies=' + ontologiesArray.toString();
+    }
 
     if (this.hasProperPageProperty(options)) {
       let pageNumber = options.page;
-      url += '&page=' + pageNumber;
+      searchURL += '&page=' + pageNumber;
+      propertySearchURL += '&page=' + pageNumber;
     }
 
     if (this.hasProperPerPageProperty(options)) {
       let NumOfResultsPerPage = options.perPage;
-      url += '&pagesize=' + NumOfResultsPerPage;
+      searchURL += '&pagesize=' + NumOfResultsPerPage;
+      propertySearchURL += '&pagesize=' + NumOfResultsPerPage;
     }
 
-    url += '&' + this.noContextField;
-    return url;
+    searchURL += '&' + this.noContextField;
+    propertySearchURL += '&' + this.noContextField;
+
+    return [searchURL, propertySearchURL];
   }
 
-  getTerms(mainTerm, synonyms) {
+  getTermsFromSearch(mainTerm, synonyms) {
     if (typeof synonyms === 'undefined')
       return [{str: mainTerm}];
     else {
@@ -533,28 +584,47 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     )();
   }
 
-  /** Check the case where you have two URLs, corresponding
+  /** Check the case where you have 4 URLs, corresponding
    *  to cases where options.sort was defined but not
    *  options.filter or both were sufficiently defined to
-   *  partition between preferred dictionaries (1st URL) and
-   *  the rest (2nd URL). Such cases may have common results
-   *  which we prune (pruning is done based on common `id` property)
+   *  partition between preferred dictionaries (1st & 2nd URL)
+   *  and the rest (3rd & 4rd URL). Such cases may have common
+   *  results when comparing 1st and 3rd URL (`/search` endpoint)
+   *  and 2nd and 4th (`/property_search` endpoint) which we
+   *  prune. Pruning is done based on common `id` property and
+   *  it results in fewer results in the 3rd and 4th VSM match
+   *  Object arrays)
    */
   pruneCommonResultsById(map) {
-    if (map.size === 2) {
+    if (map.size === 4) {
       const urls = Array.from(map.keys());
-      const firstURL = urls[0];
+
+      const firstURL  = urls[0];
       const secondURL = urls[1];
+      const thirdURL  = urls[2];
+      const fourthURL = urls[3];
+
       let matchObjArray1 = map.get(firstURL);
       let matchObjArray2 = map.get(secondURL);
-      const ids1 = this.getIDsFromMatchObjArray(matchObjArray1);
+      let matchObjArray3 = map.get(thirdURL);
+      let matchObjArray4 = map.get(fourthURL);
 
-      matchObjArray2 = matchObjArray2.filter(matchObj => {
+      const ids1 = this.getIDsFromMatchObjArray(matchObjArray1);
+      const ids2 = this.getIDsFromMatchObjArray(matchObjArray2);
+
+      matchObjArray3 = matchObjArray3.filter(matchObj => {
         if (!ids1.includes(matchObj.id)) {
           return matchObj;
         }
       });
-      map.set(secondURL, matchObjArray2);
+      map.set(thirdURL, matchObjArray3);
+
+      matchObjArray4 = matchObjArray4.filter(matchObj => {
+        if (!ids2.includes(matchObj.id)) {
+          return matchObj;
+        }
+      });
+      map.set(fourthURL, matchObjArray4);
     }
     return map;
   }
