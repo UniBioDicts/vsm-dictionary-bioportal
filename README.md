@@ -97,9 +97,10 @@ In the next sections we will explain the mapping between BioPortal's API
 terms (as specified in the [API documentation](http://data.bioontology.org/documentation))
 and the corresponding VSM objects. First, some info about the API itself:
 
-Most of the queries we launch against BioPortal use the *search endpoint*:
-`/search?q={search query}`, along with different parameters. One of the 
-most important parameters is the filtering on the ontologies' abbreviation
+Most of the queries we launch against BioPortal use the *search* and 
+*property_search* endpoints: `/search?q={search query}` and 
+`/property_search?q={search query}`, along with different parameters. One of 
+the most important parameters is the filtering on the ontologies' abbreviation
 names: `ontologies={ontologyAbbrev1,ontologyAbbrev2,ontologyAbbrev3}`.
 
 The returned terms have fields which are matched against the *search query* 
@@ -179,19 +180,21 @@ Also here, no sorting is done.
 
 - Proper `filter.id` but non proper `filter.dictID` property
 
-We use the following query to find a term by id (without any given ontologies):
+We use the following queries to find a term by id (without any given ontologies):
 ```
 http://data.bioontology.org/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=&require_exact_match=true&also_search_obsolete=true&display_context=false
+http://data.bioontology.org/property_search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=&require_exact_match=true&display_context=false
 ```
-Note that in case of querying for specific id(s), we ask also for obsolete terms.
+Note that in case of querying for specific id(s), we ask also for obsolete terms
+in the *search* endpoint but not in the *property_search* one, since it does not
+support them.
 
 Furthermore, because of multiple ontologies having terms with the same id, we 
-sort the results according to the parent class [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md),
-only when the `options.getAllResults` hack is enabled. We have also implemented 
+never sort the returned results. Instead, we have implemented 
 a workaround that infers the ontology abbreviation name from the id in some 
 cases. In the case of multiple entries with the same id, the entry for which we 
 can correctly infer their source ontology will be ranked first in the returned
-result (otherwise the first in the array of sorted results).
+result.
 
 - Both proper `filter.id` and `filter.dictID` properties
 
@@ -199,15 +202,18 @@ We use the following query to find a term by id within any of the given
 ontologies:
 ```
 http://data.bioontology.org/search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=BAO,DOID&require_exact_match=true&also_search_obsolete=true&display_context=false
+http://data.bioontology.org/property_search?q=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FDOID_1909&ontologies=BAO,DOID&require_exact_match=true&display_context=false
 ```
-Same as the previous case, we sort only when the `options.getAllResults` hack 
-is enabled and the obsolete terms are also retrieved.
+Same as the previous case, we never sort results (it's optional nonetheless) 
+and the obsolete terms are also retrieved in the *search* query option.
 
 So, after sending one query from the 4 categories above to BioPortal, the 
 returned JSON result object includes a `collection` property which has as 
 a value, an array of objects. Each object/element of that array is an entry 
 which is mapped to a VSM entry object. The mapping is fully detailed in the 
-table below:
+tables below for the different endpoints:
+
+- **/search** endpoint:  
 
 BioPortal entry's property | Type | Required | VSM entry object property | Notes  
 :---:|:---:|:---:|:---:|:---:
@@ -220,6 +226,16 @@ BioPortal entry's property | Type | Required | VSM entry object property | Notes
 `semanticType` | Array | NO | `z.tui` | Type Unique Identifier
 `obsolete` | Boolean | NO | `z.obsolete` | This z option is returned only when requesting for specific entry id(s)
 
+- **/property_search** endpoint:
+
+BioPortal entry's property | Type | Required | VSM entry object property | Notes  
+:---:|:---:|:---:|:---:|:---:
+`@id` | URL | **YES** | `id` | the property's ID
+`links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology
+`definition` | Array | NO | `descr` | we map the first definition only
+`label`, `labelGenerated` | Arrays | NO, YES | `terms[i].str` | we map the whole `label` array if it exists, otherwise the `labelGenerated` one (which *always* exists)
+`links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
+
 ### Map BioPortal to Match VSM object
 
 This specification relates to the function:  
@@ -230,6 +246,9 @@ An example of a URL string that is being built and send to BioPortal is:
 http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL&page=1&pagesize=40&display_context=false
 ```
 
+Note that every query is being duplicated by using also the *search_property* endpoint,
+so we have at least 2 queries (URLs) per one string search.
+
 The parameters are as follows:
 - `str` maps to `q=str`
 - `page` is the `options.page` and `pagesize` is `options.perPage`
@@ -237,10 +256,11 @@ The parameters are as follows:
 where we want to get terms. This parameter is being built according to the 
 values of `options.filter.dictID` and `options.sort.dictID` as well as the
 [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md)
- of the vsm-dictionary parent class. Note that there can be cases where 2 URLs
- are fired (simultaneously) during a string search to get results for preferred
- dictionaries and all the rest for example.
- 
+of the vsm-dictionary parent class. Note that there can be cases where 4 URLs
+are fired (simultaneously) during a string search to get results for preferred
+dictionaries and all the rest for example (in each seperate case, both *search*
+and *property_search* endpoints are queried).
+
 All the above are optional URL parameters, meaning that if
 for example the `options` object is empty, then the default BioPortal API 
 values will be used instead for `page` and `pagesize` (1 and 50 respectively), 
@@ -257,7 +277,10 @@ useful data to be mapped to a VSM match object.
 After sending such a query, the returned JSON result object includes a 
 `collection` property which has as a value, an array of objects. Each 
 object/element of that array is an entry which is mapped to a VSM match 
-object. The mapping is fully detailed in the table below:
+object. The mapping is fully detailed in the tables below for the different 
+endpoints:
+        
+- **/search** endpoint:  
 
 BioPortal entry's property | Type | Required | VSM match object property | Notes  
 :---:|:---:|:---:|:---:|:---:
@@ -269,3 +292,14 @@ BioPortal entry's property | Type | Required | VSM match object property | Notes
 `links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
 `cui` | Array | NO | `z.cui` | Concept Unique Identifier
 `semanticType` | Array | NO | `z.tui` | Type Unique Identifier
+
+- **/property_search** endpoint:  
+
+BioPortal entry's property | Type | Required | VSM match object property | Notes  
+:---:|:---:|:---:|:---:|:---:
+`@id` | URL | **YES** | `id` | the concept-ID
+`links.ontology` | URL | **YES** | `dictID` | the unique identifier of the ontology
+`label`, `labelGenerated` | Arrays | NO, YES | `str`,`terms[0].str` | the string representation of the term: we map the first element of the `label` array if it exists, otherwise the first element of the `labelGenerated` one (which *always* exists)
+`definition` | Array | NO | `descr` | we map the first definition only
+`label`, `labelGenerated` | Arrays | NO, YES | `terms[i].str` | we map the whole `label` array if it exists, otherwise the `labelGenerated` one (which *always* exists)
+`links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
