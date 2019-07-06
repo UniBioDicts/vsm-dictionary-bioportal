@@ -25,7 +25,7 @@ function runDemo() {
 function makeDemoBioPortal() {
 
   var apiKey = '5904481f-f6cb-4c71-94d8-3b775cf0f19e';
-  var dict = new VsmDictionaryBioPortal({apiKey: apiKey});
+  var dict = new VsmDictionaryBioPortal({apiKey: apiKey, log: true});
   this.urlRegex = /http:\/\/data.bioontology.org\/ontologies\//g;
   this.ontoURL = 'http://data.bioontology.org/ontologies/';
 
