@@ -5,9 +5,7 @@
   "main": "src/DictionaryBioPortal.js",
   "scripts": {
     "lint": "eslint src demo test",
-    "lint-fix": "eslint src demo test --fix",
     "test": "mocha \"src/**/*.test.js\" --check-leaks",
-    "start": "npm run demo",
     "demo": "webpack-dev-server --config demo/webpack.config.js",
     "build": "webpack --config webpack.config.js"
   },
