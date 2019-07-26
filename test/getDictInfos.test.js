@@ -21,7 +21,7 @@ dict.getDictInfos(
   }, (err, res) => {
     if (err) console.log(JSON.stringify(err, null, 4));
     else {
-      console.log(JSON.stringify(res, null,  4));
+      console.log(JSON.stringify(res, null, 4));
       console.log('\n#Results: ' + res.items.length);
     }
   }
