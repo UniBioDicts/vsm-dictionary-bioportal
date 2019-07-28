@@ -344,19 +344,14 @@ describe('DictionaryBioPortal.js', () => {
   });
 
   describe('getDictInfos', () => {
-    it('returns proper formatted error for non-valid ontology acronym', cb => {
+    it('returns empty result for non-valid ontology acronym', cb => {
       nock(testURLBase).get(errorNonValidAcronymURL2)
         .reply(404, errorNonValidAcronymURL2JSONString);
       dict.getDictInfos({ filter: {
         id : [testURLBase + '/ontologies/nonValidAcronym']
       }},(err, res) => {
-        err.should.deep.equal({
-          errors: [
-            'You must provide a valid `acronym` to retrieve an ontology'
-          ],
-          status: 404
-        });
-        assert.typeOf(res, 'undefined');
+        expect(err).to.be.null;
+        res.items.should.deep.equal([]);
         cb();
       });
     });
@@ -585,6 +580,9 @@ describe('DictionaryBioPortal.js', () => {
         filter: { id: [] }
       };
       const options6 = {};
+      const options7 = {
+        filter: { id : ['', ' ']}
+      };
 
       const res1 = dict.buildDictInfoURLs(options1);
       const res2 = dict.buildDictInfoURLs(options2);
@@ -592,6 +590,7 @@ describe('DictionaryBioPortal.js', () => {
       const res4 = dict.buildDictInfoURLs(options4);
       const res5 = dict.buildDictInfoURLs(options5);
       const res6 = dict.buildDictInfoURLs(options6);
+      const res7 = dict.buildDictInfoURLs(options7);
       const expectedResult = [testURLBase + '/ontologies/?display_context=false'];
 
       res1.should.deep.equal(expectedResult);
@@ -600,6 +599,7 @@ describe('DictionaryBioPortal.js', () => {
       res4.should.deep.equal(expectedResult);
       res5.should.deep.equal(expectedResult);
       res6.should.deep.equal(expectedResult);
+      res7.should.deep.equal(expectedResult);
 
       cb();
     });

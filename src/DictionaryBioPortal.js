@@ -68,8 +68,16 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       urlToResultsMap.set(url, []);
 
       this.request(url, (err, res) => {
-        if (err) return cb(err);
-        urlToResultsMap.set(url, this.mapBioPortalResToDictInfoObj(res));
+        if (err) {
+          if (err.status === 404
+            && err.errors[0] === 'You must provide a valid `acronym` to retrieve an ontology') {
+            err = null; // `res` is already set to []
+          } else {
+            return cb(err);
+          }
+        } else {
+          urlToResultsMap.set(url, this.mapBioPortalResToDictInfoObj(res));
+        }
 
         --callsRemaining;
         // all calls have returned, so trim results
@@ -221,10 +229,21 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   buildDictInfoURLs(options) {
+    let idList = [];
+
+    // remove empty space ids
     if (this.hasProperFilterIDProperty(options)) {
-      return options.filter.id.map(dictID =>
+      idList = options.filter.id.filter(id => id.trim() !== '');
+    }
+
+    if (idList.length !== 0) {
+      // specific IDs
+      return idList.map(dictID =>
         this.prepareDictInfoSearchURL(this.getDictAcronym(dictID)));
-    } else return [this.prepareDictInfoSearchURL()];
+    } else {
+      // all IDs
+      return [this.prepareDictInfoSearchURL()];
+    }
   }
 
   buildEntryURLs(options) {

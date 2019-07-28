@@ -14,7 +14,8 @@ dict.getDictInfos(
     'http://data.bioontology.org/ontologies/CHEAR',
     'http://data.bioontology.org/ontologies/RH-MESH',
     'http://data.bioontology.org/ontologies/MCCL',
-    'http://data.bioontology.org/ontologies/GO'
+    'http://data.bioontology.org/ontologies/GO',
+    'nonValidOntologyAcronymIsNotAnErrorAnymore'
   ]},
   page: 2,
   perPage: 3
