@@ -10,10 +10,14 @@ describe('DictionaryBioPortal.js', () => {
 
   const apiKey = 'testAPIKey';
   const testURLBase = 'http://test';
+  const bioPortalTestURLBase = 'http://data.bioontology.org';
   const dictNoApiKey =
     new DictionaryBioPortal({ baseURL: testURLBase });
   const dict =
     new DictionaryBioPortal({ baseURL: testURLBase, apiKey: apiKey, log: true });
+  const dictBioPortal = new DictionaryBioPortal(
+    { baseURL: bioPortalTestURLBase, apiKey: apiKey, log: true }
+  );
 
   const noContext = '&display_context=false';
   const noContext2 = '?display_context=false';
@@ -358,10 +362,10 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns proper formatted error when the server responds with a '
       + 'text string', cb => {
-      nock(testURLBase).get(errorNonValidAcronymURL2)
+      nock(bioPortalTestURLBase).get(errorNonValidAcronymURL2)
         .reply(404, '<h1>Not Found</h1>');
-      dict.getDictInfos({ filter: {
-        id : [testURLBase + '/ontologies/nonValidAcronym']
+      dictBioPortal.getDictInfos({ filter: {
+        id : [bioPortalTestURLBase + '/ontologies/nonValidAcronym']
       }},(err, res) => {
         err.should.deep.equal({
           status: 404,
@@ -373,9 +377,9 @@ describe('DictionaryBioPortal.js', () => {
     });
 
     it('returns proper dictInfo object for the GO ontology', cb => {
-      nock(testURLBase).get(searchGOontologyURL)
+      nock(bioPortalTestURLBase).get(searchGOontologyURL)
         .reply(200, goOntologyInfoJSONString);
-      dict.getDictInfos({ filter: { id : [testURLBase + '/ontologies/GO']}},
+      dictBioPortal.getDictInfos({ filter: { id : [bioPortalTestURLBase + '/ontologies/GO']}},
         (err, res) => {
           expect(err).to.equal(null);
           res.should.deep.equal(
@@ -389,6 +393,41 @@ describe('DictionaryBioPortal.js', () => {
           );
           cb();
         });
+    });
+
+    it('returns empty result when the list of dictIDs does not '
+      + ' include a BioPortal dictID', cb => {
+      dictBioPortal.getDictInfos({ filter: { id: [
+        ' ',
+        'https://www.rnacentral.org',
+        'https://www.ensembl.org' ]}},
+      (err, res) => {
+        expect(err).to.equal(null);
+        res.should.deep.equal({ items: [] });
+        cb();
+      });
+    });
+  });
+
+  describe('getEntries', () => {
+    it('returns empty result when the `options.filter.dictID` is properly ' +
+      'defined and in the list of dictIDs there is no valid bioPortal ' +
+      'dictID', cb => {
+      dict.getEntries({filter: { dictID: ['']}}, (err, res) => {
+        expect(err).to.equal(null);
+        res.should.deep.equal({ items: [] });
+      });
+
+      dict.getEntries({filter: { dictID: [
+        ' ',
+        'https://www.rnacentral.org',
+        'https://www.ensembl.org'
+      ]}}, (err, res) => {
+        expect(err).to.equal(null);
+        res.should.deep.equal({ items: [] });
+      });
+
+      cb();
     });
   });
 
@@ -413,15 +452,15 @@ describe('DictionaryBioPortal.js', () => {
 
     it('returns proper formatted error for non-valid ontology acronym in search' +
       'query', cb => {
-      nock(testURLBase).get(errorNonValidAcronymURL1)
+      nock(bioPortalTestURLBase).get(errorNonValidAcronymURL1)
         .reply(404, errorNonValidAcronymURL1JSONString);
       // to make the test pass, we give a 'no results' answer
       // to the property search query
-      nock(testURLBase).get(errorNonValidAcronymURL1Property)
+      nock(bioPortalTestURLBase).get(errorNonValidAcronymURL1Property)
         .reply(200, melanomaNoResultsJSONString);
 
-      dict.getEntryMatchesForString('a', { filter: { dictID : [
-        testURLBase + '/ontologies/NonValidAcronym'
+      dictBioPortal.getEntryMatchesForString('a', { filter: { dictID : [
+        bioPortalTestURLBase + '/ontologies/NonValidAcronym'
       ]}},(err, res) => {
         err.should.deep.equal({
           errors: [
@@ -455,6 +494,27 @@ describe('DictionaryBioPortal.js', () => {
         res.should.deep.equal({ items: [] });
         cb();
       });
+    });
+
+    it('returns empty result when the `options.filter.dictID` is properly ' +
+      'defined and in the list of dictIDs there is no valid bioPortal ' +
+      'dictID', cb => {
+      dict.getEntryMatchesForString(melanomaStr, {filter: { dictID: ['']}},
+        (err, res) => {
+          expect(err).to.equal(null);
+          res.should.deep.equal({ items: [] });
+        });
+
+      dict.getEntryMatchesForString(melanomaStr, {filter: { dictID: [
+        ' ',
+        'https://www.rnacentral.org',
+        'https://www.ensembl.org']}},
+      (err, res) => {
+        expect(err).to.equal(null);
+        res.should.deep.equal({ items: [] });
+      });
+
+      cb();
     });
 
     it('calls its URL, with a test url+apiKey ' +
@@ -578,7 +638,7 @@ describe('DictionaryBioPortal.js', () => {
 
   describe('buildDictInfoURLs', () => {
     it('returns one global URL if there is no proper `filter.id` array ' +
-      'of dictIDs', cb => {
+      'of dictIDs (proper means non-empty and BioPortal-like ids)', cb => {
       const options1 = {
         page: 2
       };
@@ -597,7 +657,12 @@ describe('DictionaryBioPortal.js', () => {
       };
       const options6 = {};
       const options7 = {
-        filter: { id : ['', ' ']}
+        filter: { id: ['', ' ']}
+      };
+      const options8 = {
+        filter: { id: [
+          '', 'https://www.rnacentral.org', 'https://www.ensembl.org'
+        ]}
       };
 
       const res1 = dict.buildDictInfoURLs(options1);
@@ -607,6 +672,7 @@ describe('DictionaryBioPortal.js', () => {
       const res5 = dict.buildDictInfoURLs(options5);
       const res6 = dict.buildDictInfoURLs(options6);
       const res7 = dict.buildDictInfoURLs(options7);
+      const res8 = dict.buildDictInfoURLs(options8);
       const expectedResult = [testURLBase + '/ontologies/?display_context=false'];
 
       res1.should.deep.equal(expectedResult);
@@ -616,6 +682,7 @@ describe('DictionaryBioPortal.js', () => {
       res5.should.deep.equal(expectedResult);
       res6.should.deep.equal(expectedResult);
       res7.should.deep.equal(expectedResult);
+      res8.should.deep.equal(expectedResult);
 
       cb();
     });
@@ -636,8 +703,17 @@ describe('DictionaryBioPortal.js', () => {
           'http://data.bioontology.org/ontologies/GO',
         ]}
       };
+      const options3 = { // should prune non BioPortal-like ids
+        filter: { id: [
+          ' ', '',
+          'https://www.rnacentral.org',
+          'http://data.bioontology.org/ontologies/GO',
+          'https://www.ensembl.org',
+        ]}
+      };
       const res1 = dict.buildDictInfoURLs(options1);
       const res2 = dict.buildDictInfoURLs(options2);
+      const res3 = dict.buildDictInfoURLs(options3);
 
       const expectedResult1 = [
         testURLBase + '/ontologies/CLO?display_context=false',
@@ -650,6 +726,7 @@ describe('DictionaryBioPortal.js', () => {
 
       res1.should.deep.equal(expectedResult1);
       res2.should.deep.equal(expectedResult2);
+      res3.should.deep.equal(expectedResult2);
 
       cb();
     });

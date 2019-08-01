@@ -133,7 +133,13 @@ rest of the calls returned proper results).
 This specification relates to the function:  
  `getDictInfos(options, cb)`
 
-An example of a URL string that is being built and send to BioPortal is:
+If the `options.filter.id` is properly defined and none of the ids used for 
+filtering are BioPortal-related (meaning that they do not have the 
+`data.bioontology.org/ontologies` as a substring), then `getDictInfos` 
+returns an empty object result.
+
+Otherwise, an example of a URL string that is being built and send to BioPortal 
+is:
 ```
 http://data.bioontology.org/ontologies/GO?display_context=false
 ```
@@ -161,6 +167,11 @@ BioPortal ontology property | Type | Required | VSM dictInfo object property | N
 
 This specification relates to the function:  
  `getEntries(options, cb)`
+
+If the `options.filter.dictID` is properly defined and none of the dictIDs used 
+for filtering are BioPortal-related (meaning that they do not have the 
+`data.bioontology.org/ontologies` as a substring), then `getEntries` 
+returns an empty object result.
 
 Depending on the `options.filter.id` and `options.filter.dictID` properties and
 following the vsm-dictionary parent class [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md),
@@ -246,6 +257,11 @@ BioPortal entry's property | Type | Required | VSM entry object property | Notes
 
 This specification relates to the function:  
  `getEntryMatchesForString(str, options, cb)`
+
+If the `options.filter.dictID` is properly defined and none of the dictIDs used 
+for filtering are BioPortal-related (meaning that they do not have the 
+`data.bioontology.org/ontologies` as a substring), then `getEntryMatchesForString` 
+returns an empty object result.
 
 An example of a URL string that is being built and send to BioPortal is:
 ```

@@ -15,7 +15,7 @@ dict.getDictInfos(
     'http://data.bioontology.org/ontologies/RH-MESH',
     'http://data.bioontology.org/ontologies/MCCL',
     'http://data.bioontology.org/ontologies/GO',
-    'nonValidOntologyAcronymIsNotAnErrorAnymore'
+    'http://data.bioontology.org/ontologies/GOxxx'
   ]},
   page: 2,
   perPage: 3

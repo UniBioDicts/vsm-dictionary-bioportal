@@ -46,6 +46,16 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   getDictInfos(options, cb) {
+    // if request is for non BioPortal-like dictIDs, return empty result
+    if (hasProperFilterIDProperty(options)) {
+      let idList = options.filter.id.filter(dictID =>
+        dictID.trim().includes('data.bioontology.org/ontologies')
+      );
+
+      if (idList.length === 0)
+        return cb(null, { items: [] });
+    }
+
     const page = this.getPage(options);
     const pagesize = this.getPageSize(options);
 
@@ -105,6 +115,20 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   getEntries(options, cb) {
+    // if request is for non BioPortal-like dictIDs, return empty result
+    if (hasProperFilterDictIDProperty(options)) {
+      let idList = options.filter.dictID.filter(dictID =>
+        dictID.trim().includes('data.bioontology.org/ontologies')
+      );
+
+      if (idList.length === 0) {
+        return cb(null, { items: [] });
+      }
+
+      // keep only the BioPortal dictIDs
+      options.filter.dictID = idList;
+    }
+
     // Hack option for getting proper sorted results from BioPortal
     // when requesting for an entry by id (with or without dictID)
     options.getAllResults = options.getAllResults || false;
@@ -171,6 +195,20 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
   getEntryMatchesForString(str, options, cb) {
     if (!str) return cb(null, {items: []});
+
+    // if request is for non BioPortal-like dictIDs, return empty result
+    if (hasProperFilterDictIDProperty(options)) {
+      let idList = options.filter.dictID.filter(dictID =>
+        dictID.trim().includes('data.bioontology.org/ontologies')
+      );
+
+      if (idList.length === 0) {
+        return cb(null, { items: [] });
+      }
+
+      // keep only the BioPortal dictIDs
+      options.filter.dictID = idList;
+    }
 
     const urlArray = this.buildMatchURLs(str, options);
     let callsRemaining = urlArray.length;
@@ -242,9 +280,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   buildDictInfoURLs(options) {
     let idList = [];
 
-    // remove empty space ids
+    // remove non-BioPortal DictIDs
     if (hasProperFilterIDProperty(options)) {
-      idList = options.filter.id.filter(id => id.trim() !== '');
+      idList = options.filter.id.filter(
+        id => id.trim().includes('data.bioontology.org/ontologies')
+      );
     }
 
     if (idList.length !== 0) {
