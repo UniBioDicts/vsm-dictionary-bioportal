@@ -16,7 +16,7 @@ dict.getEntries(
       'http://purl.obolibrary.org/obo/BFO_0000040',
       'http://purl.bioontology.org/ontology/MEDDRA/10053571',
       'http://purl.obolibrary.org/obo/BFO_0000002',
-      'http://semantic-dicom.org/dcm#ATT2010015E'
+      'http://semantic-dicom.org/dcm#ATT2010015E' // from property_search
     ],
     dictID : []
   },

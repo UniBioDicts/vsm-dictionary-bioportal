@@ -120,7 +120,13 @@ the same field from the list above (e.g. same id), these are ordered according
 to an internal (BioPortal) **ontology ranking**, which is updated every week. 
 At the time of writing these lines, the latest ranking was stored 
 [here](https://gist.github.com/mdorf/cea96433cf4bf7dd94d109c8e06e29c0) for 
-reference. 
+reference.
+
+Note also that we implement **strict error handling** in the sense that whenever 
+we launch multiple parallel queries to BioPortal's REST API (see the functions 
+specifications below), if one of them returns an error (either a string or an error 
+object response), then the result will be an error object (no matter if all the 
+rest of the calls returned proper results).
 
 ### Map BioPortal to DictInfo VSM object
 

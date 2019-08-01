@@ -119,6 +119,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     const urlArray = this.buildEntryURLs(options);
     let callsRemaining = urlArray.length;
     const urlToResultsMap = new Map();
+    let answered = false;
 
     for (let url of urlArray) {
       if (this.enableLogging)
@@ -127,35 +128,29 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       urlToResultsMap.set(url, []);
 
       this.request(url, (err, res) => {
-        if (err) return cb(err);
-
-        if (url.includes('/property_search'))
-          urlToResultsMap.set(
-            url, this.mapBioPortalPropertySearchResToEntryObj(res, options)
-          );
-        else
-          urlToResultsMap.set(
-            url, this.mapBioPortalSearchResToEntryObj(res, options)
-          );
+        if (err) {
+          if (!answered) {
+            answered = true;
+            --callsRemaining;
+            return cb(err);
+          }
+        } else {
+          if (url.includes('/property_search'))
+            urlToResultsMap.set(
+              url, this.mapBioPortalPropertySearchResToEntryObj(res, options)
+            );
+          else
+            urlToResultsMap.set(
+              url, this.mapBioPortalSearchResToEntryObj(res, options)
+            );
+        }
 
         --callsRemaining;
         // all calls have returned, so sort and trim results
         if (callsRemaining <= 0) {
-          // gather all results in one array
           let arr = [];
           for (let entryObjArray of urlToResultsMap.values())
             arr = arr.concat(entryObjArray);
-
-          // Sort only if the request was for specific id(s)
-          // and getAllResults hack is enabled (disabled because
-          // of the existence of common IDs between ontologies)
-          /*if (
-            options.getAllResults
-            && hasProperFilterIDProperty(options)
-          ) {
-            console.log('Sorting in client...');
-            arr = this.sortEntries(arr, options);
-          }*/
 
           // re-arrange if possible the returned results when requesting
           // entries by id, in case that some of them share the same id
@@ -168,7 +163,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
             Dictionary.zPropPrune(arr, options.z), options
           );
 
-          cb(err, {items: arr});
+          if (!answered) cb(err, {items: arr});
         }
       });
     }
@@ -180,6 +175,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     const urlArray = this.buildMatchURLs(str, options);
     let callsRemaining = urlArray.length;
     let urlToResultsMap = new Map();
+    let answered = false;
 
     for (let url of urlArray) {
       if (this.enableLogging)
@@ -188,16 +184,22 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       urlToResultsMap.set(url, []);
 
       this.request(url, (err, res) => {
-        if (err) return cb(err);
-
-        if (url.includes('/property_search'))
-          urlToResultsMap.set(
-            url, this.mapBioPortalPropertySearchResToMatchObj(res, str)
-          );
-        else
-          urlToResultsMap.set(
-            url, this.mapBioPortalSearchResToMatchObj(res, str)
-          );
+        if (err) {
+          if (!answered) {
+            answered = true;
+            --callsRemaining;
+            return cb(err);
+          }
+        } else {
+          if (url.includes('/property_search'))
+            urlToResultsMap.set(
+              url, this.mapBioPortalPropertySearchResToMatchObj(res, str)
+            );
+          else
+            urlToResultsMap.set(
+              url, this.mapBioPortalSearchResToMatchObj(res, str)
+            );
+        }
 
         --callsRemaining;
         // all calls have returned, so merge, prune, sort and trim results
@@ -231,7 +233,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
           arr = this.trimMatchObjArray(arr, options);
 
-          cb(err, {items: arr});
+          if (!answered) cb(err, {items: arr});
         }
       });
     }
