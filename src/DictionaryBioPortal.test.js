@@ -53,7 +53,7 @@ describe('DictionaryBioPortal.js', () => {
     'resources', 'query_go_ontology.json');
   const json3ontologiesInfoPath = path.join(__dirname, '..',
     'resources', 'query_all_ontologies_pruned.json');
-  const jsonNotValidAPIkeyPath = path.join(__dirname, '..',
+  const jsonNonValidAPIKeyPath = path.join(__dirname, '..',
     'resources', 'not_valid_api_key_error.json');
   const jsonError1Path = path.join(__dirname, '..',
     'resources', 'error_non_valid_acronym_1.json');
@@ -72,8 +72,8 @@ describe('DictionaryBioPortal.js', () => {
     fs.readFileSync(jsonGOontologyInfoPath, 'utf8');
   const threeOntologiesInfoJSONString =
     fs.readFileSync(json3ontologiesInfoPath, 'utf8');
-  const notValidAPIkeyJSONString =
-    fs.readFileSync(jsonNotValidAPIkeyPath, 'utf8');
+  const nonValidAPIKeyJSONString =
+    fs.readFileSync(jsonNonValidAPIKeyPath, 'utf8');
   const errorNonValidAcronymURL1JSONString =
     fs.readFileSync(jsonError1Path, 'utf8');
   const errorNonValidAcronymURL2JSONString =
@@ -356,6 +356,22 @@ describe('DictionaryBioPortal.js', () => {
       });
     });
 
+    it('returns proper formatted error when the server responds with a '
+      + 'text string', cb => {
+      nock(testURLBase).get(errorNonValidAcronymURL2)
+        .reply(404, '<h1>Not Found</h1>');
+      dict.getDictInfos({ filter: {
+        id : [testURLBase + '/ontologies/nonValidAcronym']
+      }},(err, res) => {
+        err.should.deep.equal({
+          status: 404,
+          errors: [ '<h1>Not Found</h1>' ]
+        });
+        assert.typeOf(res, 'undefined');
+        cb();
+      });
+    });
+
     it('returns proper dictInfo object for the GO ontology', cb => {
       nock(testURLBase).get(searchGOontologyURL)
         .reply(200, goOntologyInfoJSONString);
@@ -379,7 +395,7 @@ describe('DictionaryBioPortal.js', () => {
   describe('getEntryMatchesForString', () => {
     it('calls its URL, with no apiKey given as an option', cb => {
       nock(testURLBase).get(melanomaURL)
-        .reply(401, notValidAPIkeyJSONString);
+        .reply(401, nonValidAPIKeyJSONString);
       // to make the test pass, we give a 'no results' answer
       // to the property search query
       nock(testURLBase).get(melanomaPropertyURL)
@@ -1764,32 +1780,6 @@ describe('DictionaryBioPortal.js', () => {
     });
   });
 
-  describe('hasProperEntrySortProperty', () => {
-    it('returns true or false whether the `options.sort` property for an ' +
-      'entry VSM object is properly defined', cb => {
-      const options = {};
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(false);
-      options.sort = [];
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(false);
-      options.sort = {};
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(false);
-      options.sort = '';
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(false);
-      options.sort = 45;
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(false);
-      options.sort = 'dictID';
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(true);
-      options.sort = 'id';
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(true);
-      options.sort = 'str';
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(true);
-      options.sort = noResultsStr;
-      expect(dict.hasProperEntrySortProperty(options)).to.equal(false);
-
-      cb();
-    });
-  });
-
   describe('trimDictInfoArray', () => {
     it('correctly trims the array of dictInfo objects based on the values ' +
       'of page, pagesize and the number of results obtained', cb => {
@@ -1843,28 +1833,6 @@ describe('DictionaryBioPortal.js', () => {
       res11.should.deep.equal([]);
       res12.should.deep.equal(arr);
       res13.should.deep.equal([]);
-
-      cb();
-    });
-  });
-
-  describe('fixedEncodeURIComponent', () => {
-    it('testing the difference between the standard encoding function ' +
-      'and the implementation which is compatible with the RFC 3986', cb => {
-      expect(encodeURIComponent('!')).to.equal('!');
-      expect(dict.fixedEncodeURIComponent('!')).to.equal('%21');
-
-      expect(encodeURIComponent('\'')).to.equal('\'');
-      expect(dict.fixedEncodeURIComponent('\'')).to.equal('%27');
-
-      expect(encodeURIComponent('(')).to.equal('(');
-      expect(dict.fixedEncodeURIComponent('(')).to.equal('%28');
-
-      expect(encodeURIComponent(')')).to.equal(')');
-      expect(dict.fixedEncodeURIComponent(')')).to.equal('%29');
-
-      expect(encodeURIComponent('*')).to.equal('*');
-      expect(dict.fixedEncodeURIComponent('*')).to.equal('%2A');
 
       cb();
     });
