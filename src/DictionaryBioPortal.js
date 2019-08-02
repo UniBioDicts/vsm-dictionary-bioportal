@@ -1,7 +1,7 @@
 const Dictionary = require('vsm-dictionary');
 const { hasProperEntrySortProperty, hasProperFilterDictIDProperty,
   hasProperFilterIDProperty, hasProperPageProperty, hasPagePropertyEqualToOne,
-  hasProperPerPageProperty, hasProperSortDictIDProperty, str_cmp,
+  hasProperPerPageProperty, hasProperSortDictIDProperty, str_cmp, deepClone,
   fixedEncodeURIComponent, isJSONString, getLastPartOfURL } = require('./fun');
 
 module.exports = class DictionaryBioPortal extends Dictionary {
@@ -115,9 +115,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   getEntries(options, cb) {
+    let optionsCloned = deepClone(options);
+
     // if request is for non BioPortal-like dictIDs, return empty result
-    if (hasProperFilterDictIDProperty(options)) {
-      let idList = options.filter.dictID.filter(dictID =>
+    if (hasProperFilterDictIDProperty(optionsCloned)) {
+      let idList = optionsCloned.filter.dictID.filter(dictID =>
         dictID.trim().includes('data.bioontology.org/ontologies')
       );
 
@@ -126,21 +128,22 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       }
 
       // keep only the BioPortal dictIDs
-      options.filter.dictID = idList;
+      optionsCloned.filter.dictID = idList;
     }
 
     // Hack option for getting proper sorted results from BioPortal
     // when requesting for an entry by id (with or without dictID)
-    options.getAllResults = options.getAllResults || false;
+    optionsCloned.getAllResults = optionsCloned.getAllResults || false;
 
-    if ((options.getAllResults) && hasProperFilterIDProperty(options)) {
-      options.page = 1;
-      options.perPage = this.hijackPageSize(options);
-      console.log('Hijacking options: page = ' + options.page + ', perPage = '
-                                               + options.perPage);
+    if ((optionsCloned.getAllResults)
+      && hasProperFilterIDProperty(optionsCloned)) {
+      optionsCloned.page = 1;
+      optionsCloned.perPage = this.hijackPageSize(optionsCloned);
+      console.log('Hijacking options: page = ' + optionsCloned.page
+        + ', perPage = ' + optionsCloned.perPage);
     }
 
-    const urlArray = this.buildEntryURLs(options);
+    const urlArray = this.buildEntryURLs(optionsCloned);
     let callsRemaining = urlArray.length;
     const urlToResultsMap = new Map();
     let answered = false;
@@ -160,12 +163,12 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           }
         } else {
           if (url.includes('/property_search'))
-            urlToResultsMap.set(
-              url, this.mapBioPortalPropertySearchResToEntryObj(res, options)
+            urlToResultsMap.set(url,
+              this.mapBioPortalPropertySearchResToEntryObj(res, optionsCloned)
             );
           else
-            urlToResultsMap.set(
-              url, this.mapBioPortalSearchResToEntryObj(res, options)
+            urlToResultsMap.set(url,
+              this.mapBioPortalSearchResToEntryObj(res, optionsCloned)
             );
         }
 
@@ -178,13 +181,13 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
           // re-arrange if possible the returned results when requesting
           // entries by id, in case that some of them share the same id
-          if (hasProperFilterIDProperty(options)) {
+          if (hasProperFilterIDProperty(optionsCloned)) {
             arr = this.reArrangeEntries(arr);
           }
 
           // z-prune and trim results
           arr = this.trimEntryObjArray(
-            Dictionary.zPropPrune(arr, options.z), options
+            Dictionary.zPropPrune(arr, optionsCloned.z), optionsCloned
           );
 
           if (!answered) cb(err, {items: arr});
@@ -197,8 +200,9 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     if (!str) return cb(null, {items: []});
 
     // if request is for non BioPortal-like dictIDs, return empty result
-    if (hasProperFilterDictIDProperty(options)) {
-      let idList = options.filter.dictID.filter(dictID =>
+    let optionsCloned = deepClone(options);
+    if (hasProperFilterDictIDProperty(optionsCloned)) {
+      let idList = optionsCloned.filter.dictID.filter(dictID =>
         dictID.trim().includes('data.bioontology.org/ontologies')
       );
 
@@ -207,10 +211,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       }
 
       // keep only the BioPortal dictIDs
-      options.filter.dictID = idList;
+      optionsCloned.filter.dictID = idList;
     }
 
-    const urlArray = this.buildMatchURLs(str, options);
+    const urlArray = this.buildMatchURLs(str, optionsCloned);
     let callsRemaining = urlArray.length;
     let urlToResultsMap = new Map();
     let answered = false;
@@ -265,11 +269,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           let arr = [];
           for (let matchObjArray of mergedMatchObjArrays) {
             arr = arr.concat(this.sortMatches(
-              Dictionary.zPropPrune(matchObjArray, options.z))
+              Dictionary.zPropPrune(matchObjArray, optionsCloned.z))
             );
           }
 
-          arr = this.trimMatchObjArray(arr, options);
+          arr = this.trimMatchObjArray(arr, optionsCloned);
 
           if (!answered) cb(err, {items: arr});
         }

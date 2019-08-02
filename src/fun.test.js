@@ -1,4 +1,4 @@
-const { getLastPartOfURL, fixedEncodeURIComponent, isJSONString,
+const { getLastPartOfURL, fixedEncodeURIComponent, isJSONString, deepClone,
   hasProperEntrySortProperty } = require('./fun');
 const chai = require('chai'); chai.should();
 const expect = chai.expect;
@@ -97,6 +97,18 @@ describe('fun.js', () => {
       expect(hasProperEntrySortProperty(options)).to.equal(false);
 
       cb();
+    });
+  });
+
+  describe('deepClone', () => {
+    it('deep-clones, so changes on the original object do not affect '
+      + 'the clone', () => {
+      let x = { a: 1,  b: {c: 1} };
+      let y = deepClone(x);
+      y.b.c = 2;
+
+      x.should.deep.equal({ a: 1,  b: {c: 1} });
+      y.should.deep.equal({ a: 1,  b: {c: 2} });
     });
   });
 });

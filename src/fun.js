@@ -1,6 +1,6 @@
 module.exports = { hasProperEntrySortProperty, hasProperFilterDictIDProperty,
   hasProperFilterIDProperty, hasProperPageProperty, hasPagePropertyEqualToOne,
-  hasProperPerPageProperty, hasProperSortDictIDProperty, str_cmp,
+  hasProperPerPageProperty, hasProperSortDictIDProperty, str_cmp, deepClone,
   fixedEncodeURIComponent, isJSONString, getLastPartOfURL };
 
 function getLastPartOfURL(strURL) {
@@ -79,4 +79,12 @@ function hasProperEntrySortProperty(options) {
       || options.sort === 'id'
       || options.sort === 'str'
     );
+}
+/** If you do not use Dates, functions, undefined, Infinity, RegExps, Maps,
+    Sets, Blobs, FileLists, ImageDatas, sparse Arrays, Typed Arrays or other
+    complex types within your object, a very simple one liner to deep clone
+    an object is the function below!
+ */
+function deepClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
 }
