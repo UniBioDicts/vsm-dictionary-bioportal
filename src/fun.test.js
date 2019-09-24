@@ -1,5 +1,5 @@
 const { getLastPartOfURL, fixedEncodeURIComponent, isJSONString, deepClone,
-  hasProperEntrySortProperty } = require('./fun');
+  hasProperEntrySortProperty, removeDuplicates } = require('./fun');
 const chai = require('chai'); chai.should();
 const expect = chai.expect;
 const fs = require('fs');
@@ -61,14 +61,17 @@ describe('fun.js', () => {
 
   describe('isJSONString', () => {
     it('returns true or false whether the provided string is a JSON string or ' +
-      'not', cb => {
-      expect(isJSONString(melanoma1resultJSONString)).to.be.true;
-      expect(isJSONString(melanomaNoResultsJSONString)).to.be.true;
-      expect(isJSONString(nonValidAPIKeyJSONString)).to.be.true;
+      'not!', cb => {
+      expect(isJSONString(melanoma1resultJSONString)).to.equal(true);
+      expect(isJSONString(melanomaNoResultsJSONString)).to.equal(true);
+      expect(isJSONString(nonValidAPIKeyJSONString)).to.equal(true);
 
-      expect(isJSONString('')).to.be.false;
-      expect(isJSONString('melanoma')).to.be.false;
-      expect(isJSONString('<h1>Not Found</h1>')).to.be.false;
+      expect(isJSONString('')).to.equal(false);
+      expect(isJSONString('melanoma')).to.equal(false);
+      expect(isJSONString('<h1>Not Found</h1>')).to.equal(false);
+      expect(isJSONString([])).to.equal(false);
+      expect(isJSONString({})).to.equal(false);
+      expect(isJSONString('{}')).to.equal(true);
 
       cb();
     });
@@ -109,6 +112,17 @@ describe('fun.js', () => {
 
       x.should.deep.equal({ a: 1,  b: {c: 1} });
       y.should.deep.equal({ a: 1,  b: {c: 2} });
+    });
+  });
+
+  describe('removeDuplicates', () => {
+    it('returns proper results', cb => {
+      removeDuplicates([]).should.deep.equal([]);
+      removeDuplicates([1,2,3]).should.deep.equal([1,2,3]);
+      removeDuplicates([1,2,1,3,1,2]).should.deep.equal([1,2,3]);
+      removeDuplicates(['r','t','t','s','r','e','s'])
+        .should.deep.equal(['r','t','s','e']);
+      cb();
     });
   });
 });

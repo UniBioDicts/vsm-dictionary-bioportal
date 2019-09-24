@@ -1,7 +1,7 @@
 module.exports = { hasProperEntrySortProperty, hasProperFilterDictIDProperty,
   hasProperFilterIDProperty, hasProperPageProperty, hasPagePropertyEqualToOne,
   hasProperPerPageProperty, hasProperSortDictIDProperty, str_cmp, deepClone,
-  fixedEncodeURIComponent, isJSONString, getLastPartOfURL };
+  fixedEncodeURIComponent, isJSONString, getLastPartOfURL, removeDuplicates };
 
 function getLastPartOfURL(strURL) {
   return strURL.split('/').pop();
@@ -27,7 +27,8 @@ function str_cmp(a, b, caseMatters = false) {
 
 function isJSONString(str) {
   try {
-    return (JSON.parse(str) && !!str);
+    let json = JSON.parse(str);
+    return (json && typeof json === 'object');
   } catch (e) {
     return false;
   }
@@ -87,4 +88,8 @@ function hasProperEntrySortProperty(options) {
  */
 function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
+}
+
+function removeDuplicates(arr) {
+  return [...new Set(arr)];
 }

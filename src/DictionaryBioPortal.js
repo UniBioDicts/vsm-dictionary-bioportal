@@ -2,7 +2,8 @@ const Dictionary = require('vsm-dictionary');
 const { hasProperEntrySortProperty, hasProperFilterDictIDProperty,
   hasProperFilterIDProperty, hasProperPageProperty, hasPagePropertyEqualToOne,
   hasProperPerPageProperty, hasProperSortDictIDProperty, str_cmp, deepClone,
-  fixedEncodeURIComponent, isJSONString, getLastPartOfURL } = require('./fun');
+  fixedEncodeURIComponent, isJSONString, getLastPartOfURL,
+  removeDuplicates } = require('./fun');
 
 module.exports = class DictionaryBioPortal extends Dictionary {
 
@@ -47,13 +48,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
   getDictInfos(options, cb) {
     // if request is for non BioPortal-like dictIDs, return empty result
-    if (hasProperFilterIDProperty(options)) {
-      let idList = options.filter.id.filter(dictID =>
-        dictID.trim().includes('data.bioontology.org/ontologies')
-      );
-
-      if (idList.length === 0)
-        return cb(null, { items: [] });
+    if (hasProperFilterIDProperty(options)
+      && options.filter.id.findIndex(
+        id => id.includes('data.bioontology.org/ontologies')) === -1
+    ) {
+      return cb(null, { items: [] });
     }
 
     const page = this.getPage(options);
@@ -62,7 +61,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     let urlArray = this.buildDictInfoURLs(options);
 
     // prune common urls (e.g. when someone evil asks for an ontology twice)
-    urlArray = Array.from(new Set(urlArray));
+    urlArray = removeDuplicates(urlArray);
     let callsRemaining = urlArray.length;
 
     // cover the cases where you don't even need to send a query to BioPortal
@@ -197,7 +196,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
   }
 
   getEntryMatchesForString(str, options, cb) {
-    if (!str) return cb(null, {items: []});
+    if ((!str) || (str.trim() === '')) return cb(null, {items: []});
 
     // if request is for non BioPortal-like dictIDs, return empty result
     let optionsCloned = deepClone(options);
@@ -631,10 +630,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     req.onreadystatechange = function () {
       if (req.readyState === 4) {
         if (req.status !== 200) {
-          isJSONString(req.responseText)
-            ? cb(JSON.parse(req.responseText))
+          let response = req.responseText;
+          isJSONString(response)
+            ? cb(JSON.parse(response))
             : cb(JSON.parse('{ "status": ' + req.status
-              + ', "errors": [' + JSON.stringify(req.responseText) + ']}'));
+              + ', "errors": [' + JSON.stringify(response) + ']}'));
         }
         else {
           try {
