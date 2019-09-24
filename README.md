@@ -125,8 +125,18 @@ reference.
 Note also that we implement **strict error handling** in the sense that whenever 
 we launch multiple parallel queries to BioPortal's REST API (see the functions 
 specifications below), if one of them returns an error (either a string or an error 
-object response), then the result will be an error object (no matter if all the 
-rest of the calls returned proper results).
+JSON object response), then the result will be an error object (no matter if all the 
+rest of the calls returned proper results). 
+
+If the error response in not a JSON string that we can parse, we formulate the 
+error as a JSON object ourselves in the following format:
+```
+{
+  status: <number>,
+  error: <response> 
+}
+```
+where the *response* from the server is JSON stringified.
 
 ### Map BioPortal to DictInfo VSM object
 

@@ -69,6 +69,7 @@ describe('fun.js', () => {
       expect(isJSONString('')).to.equal(false);
       expect(isJSONString('melanoma')).to.equal(false);
       expect(isJSONString('<h1>Not Found</h1>')).to.equal(false);
+      expect(isJSONString('[\'<h1> not found </h1>\']')).to.equal(false);
       expect(isJSONString([])).to.equal(false);
       expect(isJSONString({})).to.equal(false);
       expect(isJSONString('{}')).to.equal(true);

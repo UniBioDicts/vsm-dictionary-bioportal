@@ -83,8 +83,10 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
       this.request(url, (err, res) => {
         if (err) {
-          if (err.status === 404
-            && err.errors[0] === 'You must provide a valid `acronym` to retrieve an ontology') {
+          if (typeof(err.status) !== 'undefined' && err.status === 404
+            && typeof(err.errors) !== 'undefined'
+            && err.errors[0] === 'You must provide a valid `acronym` to retrieve an ontology'
+          ) {
             err = null; // `res` is already set to []
           } else {
             if (!answered) {
@@ -634,7 +636,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
           isJSONString(response)
             ? cb(JSON.parse(response))
             : cb(JSON.parse('{ "status": ' + req.status
-              + ', "errors": [' + JSON.stringify(response) + ']}'));
+              + ', "error": ' + JSON.stringify(response) + '}'));
         }
         else {
           try {

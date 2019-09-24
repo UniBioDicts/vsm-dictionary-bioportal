@@ -369,7 +369,7 @@ describe('DictionaryBioPortal.js', () => {
       }},(err, res) => {
         err.should.deep.equal({
           status: 404,
-          errors: [ '<h1>Not Found</h1>' ]
+          error: '<h1>Not Found</h1>'
         });
         assert.typeOf(res, 'undefined');
         cb();
