@@ -17,7 +17,8 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     this.enableLogging = opt.log || false;
 
     // an API key must provided to get data from BioPortal
-    this.key = opt.apiKey || {};
+    this.bioPortalAPIkey = (typeof opt.apiKey === 'string' && opt.apiKey !== '')
+      ? opt.apiKey : '';
 
     // the context-related info is needed for matching to VSM objects
     this.noContextField = 'display_context=false';
@@ -649,7 +650,7 @@ module.exports = class DictionaryBioPortal extends Dictionary {
       }
     };
     req.open('GET', url, true);
-    req.setRequestHeader('Authorization', 'apikey token=' + this.key);
+    req.setRequestHeader('Authorization', 'apikey token=' + this.bioPortalAPIkey);
     req.send();
   }
 
