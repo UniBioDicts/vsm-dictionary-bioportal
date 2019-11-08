@@ -1,5 +1,11 @@
 # vsm-dictionary-bioportal
 
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.org/vsmjs/vsm-dictionary-bioportal.svg?branch=master)](https://travis-ci.org/vsmjs/vsm-dictionary-bioportal)
+[![npm version](https://img.shields.io/npm/v/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
+[![Downloads](https://img.shields.io/npm/dm/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
+<!-- badges: end -->
+
 ## Summary
 
 `vsm-dictionary-bioportal` is an implementation 
