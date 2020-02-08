@@ -341,3 +341,7 @@ BioPortal entry's property | Type | Required | VSM match object property | Notes
 `definition` | Array | NO | `descr` | we map the first definition only
 `label`, `labelGenerated` | Arrays | NO, YES | `terms[i].str` | we map the whole `label` array if it exists, otherwise the `labelGenerated` one (which *always* exists)
 `links.ontology` | URL | **YES** | `z.dictAbbrev` | the unique ontology acronym
+
+## License
+
+This project is licensed under the AGPL license - see [LICENSE.md](LICENSE.md).

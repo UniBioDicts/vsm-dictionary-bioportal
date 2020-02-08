@@ -23,6 +23,7 @@
     "url": "git+https://github.com/vsmjs/vsm-dictionary-bioportal"
   },
   "author": "John Zobolas",
+  "license": "AGPL-3.0",
   "devDependencies": {
     "@babel/core": "^7.0.0-rc.1",
     "@babel/preset-env": "^7.0.0-rc.1",
