@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.org/vsmjs/vsm-dictionary-bioportal.svg?branch=master)](https://travis-ci.org/vsmjs/vsm-dictionary-bioportal)
-[![coverage](https://img.shields.io/codecov/c/gh/vsmjs/vsm-dictionary-bioportal)](https://img.shields.io/codecov/c/gh/vsmjs/vsm-dictionary-bioportal)
+[![codecov](https://codecov.io/gh/vsmjs/vsm-dictionary-bioportal/branch/master/graph/badge.svg)](https://codecov.io/gh/vsmjs/vsm-dictionary-bioportal)
 [![npm version](https://img.shields.io/npm/v/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
 [![Downloads](https://img.shields.io/npm/dm/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
 <!-- badges: end -->
