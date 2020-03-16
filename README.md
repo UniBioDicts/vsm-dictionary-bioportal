@@ -5,6 +5,7 @@
 [![codecov](https://codecov.io/gh/vsmjs/vsm-dictionary-bioportal/branch/master/graph/badge.svg)](https://codecov.io/gh/vsmjs/vsm-dictionary-bioportal)
 [![npm version](https://img.shields.io/npm/v/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
 [![Downloads](https://img.shields.io/npm/dm/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
+[![License](https://img.shields.io/npm/l/vsm-dictionary-bioportal)](#license)
 <!-- badges: end -->
 
 ## Summary
