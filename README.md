@@ -1,7 +1,7 @@
 # vsm-dictionary-bioportal
 
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.org/vsmjs/vsm-dictionary-bioportal.svg?branch=master)](https://travis-ci.org/vsmjs/vsm-dictionary-bioportal)
+[![Build Status](https://travis-ci.org/UniBioDicts/vsm-dictionary-bioportal.svg?branch=master)](https://travis-ci.org/UniBioDicts/vsm-dictionary-bioportal)
 [![codecov](https://codecov.io/gh/vsmjs/vsm-dictionary-bioportal/branch/master/graph/badge.svg)](https://codecov.io/gh/vsmjs/vsm-dictionary-bioportal)
 [![npm version](https://img.shields.io/npm/v/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
 [![Downloads](https://img.shields.io/npm/dm/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
@@ -15,6 +15,10 @@ of the 'VsmDictionary' parent-class/interface (from the package
 [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary)), that
 communicates with [BioPortal's](https://bioportal.bioontology.org/) 
 REST API and translates the provided terms+IDs into a VSM-specific format.
+
+## Install
+
+Run: `npm install`
 
 ## Example use
 
