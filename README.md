@@ -116,8 +116,9 @@ the most important parameters is the filtering on the ontologies' abbreviation
 names: `ontologies={ontologyAbbrev1,ontologyAbbrev2,ontologyAbbrev3}`.
 
 The returned terms have fields which are matched against the *search query* 
-(q parameter). The fields are searched based on the following order of 
-**match rank priority:**
+(`q` parameter). The fields are searched based on the following order (**match
+ rank priority):**
+ 
 - id
 - prefLabelExact (match on the full pref label) 
 - prefLabel (match on partial pref label)
@@ -126,6 +127,14 @@ The returned terms have fields which are matched against the *search query*
 - notation (last fragment of id)
 - cui (for UMLS ontologies)
 - semantic_types
+
+Note that BioPortal's partial matching means that it can match by default single words in a multi-word expression, and these results are usually ranked lower than the full expression matches.
+It does not mean though that it performs **starts with** partial matches.
+Because curators wanted to have partial-word matches, we enabled that feature by default and every search query has the `suggest=true` URL parameter added.
+ You can disable it in the constructor as follows:
+```javascript
+const dict = new DictionaryBioPortal({apiKey: apiKeyString, suggest: false});
+```
 
 If the URL has the `ontologies` parameter, then when you get results that have 
 the same field from the list above (e.g. same id), these are ordered according 
@@ -287,7 +296,7 @@ returns an empty object result.
 
 An example of a URL string that is being built and send to BioPortal is:
 ```
-http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL&page=1&pagesize=40&display_context=false
+http://data.bioontology.org/search?q=melanoma&ontologies=RH-MESH,MCCL&page=1&pagesize=40&display_context=false&suggest=true
 ```
 
 Note that every query is being duplicated by using also the *search_property* endpoint,
@@ -304,19 +313,18 @@ of the vsm-dictionary parent class. Note that there can be cases where 4 URLs
 are fired (simultaneously) during a string search to get results for preferred
 dictionaries and all the rest for example (in each seperate case, both *search*
 and *property_search* endpoints are queried).
+- `suggest=true` is used to perform a search specifically geared towards type-ahead suggestions
 
-All the above are optional URL parameters, meaning that if
+Most of the above are optional URL parameters, meaning that if
 for example the `options` object is empty, then the default BioPortal API 
 values will be used instead for `page` and `pagesize` (1 and 50 respectively), 
 while the search will be done on all ontologies available at BioPortal's 
 repository (the `ontologies=` part of the URL will be pruned):
 ```
-http://data.bioontology.org/search?q=melanoma&display_context=false
+http://data.bioontology.org/search?q=melanoma&display_context=false&suggest=true
 ```
 
-The search string is obligatory though (if you want to get non-empty results :) 
-and the `display_context=false` is always added since it does not provide any
-useful data to be mapped to a VSM match object.
+The search string is obligatory though (if you want to get non-empty results :), the `suggest=true` is enabled by default and the `display_context=false` is always added since the additional `context` does not provide any useful data to be mapped to a VSM match object.
 
 After sending such a query, the returned JSON result object includes a 
 `collection` property which has as a value, an array of objects. Each 
