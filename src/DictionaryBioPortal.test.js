@@ -11,12 +11,18 @@ describe('DictionaryBioPortal.js', () => {
   const apiKey = 'testAPIKey';
   const testURLBase = 'http://test';
   const bioPortalTestURLBase = 'http://data.bioontology.org';
-  const dictNoApiKey =
-    new DictionaryBioPortal({ baseURL: testURLBase });
-  const dict =
-    new DictionaryBioPortal({ baseURL: testURLBase, apiKey: apiKey, log: true });
+  const dictNoApiKey = new DictionaryBioPortal({
+    baseURL: testURLBase, suggest: false
+  });
+  const dict = new DictionaryBioPortal({
+    baseURL: testURLBase, apiKey: apiKey, log: true, suggest: false
+  });
+  // suggest default value: true
+  const dictWithSuggest = new DictionaryBioPortal({
+    baseURL: testURLBase, apiKey: apiKey, log: true
+  });
   const dictBioPortal = new DictionaryBioPortal(
-    { baseURL: bioPortalTestURLBase, apiKey: apiKey, log: true }
+    { baseURL: bioPortalTestURLBase, apiKey: apiKey, log: true, suggest: false }
   );
 
   const noContext = '&display_context=false';
@@ -934,8 +940,15 @@ describe('DictionaryBioPortal.js', () => {
         testURLBase + '/property_search?q=melanoma&page=20&pagesize=20&display_context=false'
       ];
 
+      const res3 = dictWithSuggest.buildMatchURLs(melanomaStr, options);
+      const expectedResult3 = [
+        testURLBase + '/search?q=melanoma&page=20&pagesize=20&display_context=false&suggest=true',
+        testURLBase + '/property_search?q=melanoma&page=20&pagesize=20&display_context=false&suggest=true'
+      ];
+
       res1.should.deep.equal(expectedResult1);
       res2.should.deep.equal(expectedResult2);
+      res3.should.deep.equal(expectedResult3);
       cb();
     });
 
@@ -966,8 +979,15 @@ describe('DictionaryBioPortal.js', () => {
         testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&page=20&pagesize=20&display_context=false'
       ];
 
+      const res3 = dictWithSuggest.buildMatchURLs(melanomaStr, options);
+      const expectedResult3 = [
+        testURLBase + '/search?q=melanoma&ontologies=A,B,C&page=20&pagesize=20&display_context=false&suggest=true',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&page=20&pagesize=20&display_context=false&suggest=true'
+      ];
+
       res1.should.deep.equal(expectedResult1);
       res2.should.deep.equal(expectedResult2);
+      res3.should.deep.equal(expectedResult3);
       cb();
     });
 
@@ -1008,9 +1028,18 @@ describe('DictionaryBioPortal.js', () => {
         testURLBase + '/property_search?q=melanoma&display_context=false'
       ];
 
+      const res4 = dictWithSuggest.buildMatchURLs(melanomaStr, options);
+      const expectedResult4 = [
+        testURLBase + '/search?q=melanoma&ontologies=A,B,C&display_context=false&suggest=true',
+        testURLBase + '/property_search?q=melanoma&ontologies=A,B,C&display_context=false&suggest=true',
+        testURLBase + '/search?q=melanoma&display_context=false&suggest=true',
+        testURLBase + '/property_search?q=melanoma&display_context=false&suggest=true'
+      ];
+
       res1.should.deep.equal(expectedResult1);
       res2.should.deep.equal(expectedResult2);
       res3.should.deep.equal(expectedResult3);
+      res4.should.deep.equal(expectedResult4);
       cb();
     });
 
@@ -1029,6 +1058,15 @@ describe('DictionaryBioPortal.js', () => {
         page: 1,
         perPage: 20
       };
+
+      // filter.dictID = {A,B,C}, sort.dictID = {A}, page = 1
+      const res0 = dictWithSuggest.buildMatchURLs(melanomaStr, options);
+      const expectedResult0 = [
+        testURLBase + '/search?q=melanoma&ontologies=A&page=1&pagesize=20&display_context=false&suggest=true',
+        testURLBase + '/property_search?q=melanoma&ontologies=A&page=1&pagesize=20&display_context=false&suggest=true',
+        testURLBase + '/search?q=melanoma&ontologies=B,C&page=1&pagesize=20&display_context=false&suggest=true',
+        testURLBase + '/property_search?q=melanoma&ontologies=B,C&page=1&pagesize=20&display_context=false&suggest=true'
+      ];
 
       // filter.dictID = {A,B,C}, sort.dictID = {A}, page = 1
       const res1 = dict.buildMatchURLs(melanomaStr, options);
@@ -1108,6 +1146,7 @@ describe('DictionaryBioPortal.js', () => {
       options.sort.dictID.push('http://test/ontologies/G');
       const res9 = dict.buildMatchURLs(melanomaStr, options);
 
+      res0.should.deep.equal(expectedResult0);
       res1.should.deep.equal(expectedResult1);
       res2.should.deep.equal(expectedResult2);
       res3.should.deep.equal(expectedResult3);

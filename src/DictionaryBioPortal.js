@@ -16,6 +16,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
     // enable the console.log() usage
     this.enableLogging = opt.log || false;
 
+    // enable search with type-ahead suggestions
+    this.suggest = (typeof opt.suggest === 'boolean')
+      ? opt.suggest
+      : true;
+
     // an API key must provided to get data from BioPortal
     this.bioPortalAPIkey = (typeof opt.apiKey === 'string' && opt.apiKey !== '')
       ? opt.apiKey : '';
@@ -624,6 +629,11 @@ module.exports = class DictionaryBioPortal extends Dictionary {
 
     searchURL += '&' + this.noContextField;
     propertySearchURL += '&' + this.noContextField;
+
+    if (this.suggest) {
+      searchURL += '&suggest=true';
+      propertySearchURL += '&suggest=true';
+    }
 
     return [searchURL, propertySearchURL];
   }
