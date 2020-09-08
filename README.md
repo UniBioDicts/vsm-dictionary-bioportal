@@ -12,7 +12,7 @@
 
 `vsm-dictionary-bioportal` is an implementation 
 of the 'VsmDictionary' parent-class/interface (from the package
-[`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary)), that
+[`vsm-dictionary`](https://github.com/vsm/vsm-dictionary)), that
 communicates with [BioPortal's](https://bioportal.bioontology.org/) 
 REST API and translates the provided terms+IDs into a VSM-specific format.
 
@@ -104,7 +104,7 @@ So after the build step, `demo-build.html` does not need Webpack to run.
 
 Like all VsmDictionary subclass implementations, this package follows
 the parent class
-[specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md).
+[specification](https://github.com/vsm/vsm-dictionary/blob/master/Dictionary.spec.md).
 In the next sections we will explain the mapping between BioPortal's API 
 terms (as specified in the [API documentation](http://data.bioontology.org/documentation))
 and the corresponding VSM objects. First, some info about the API itself:
@@ -205,7 +205,7 @@ for filtering are BioPortal-related (meaning that they do not have the
 returns an empty object result.
 
 Depending on the `options.filter.id` and `options.filter.dictID` properties and
-following the vsm-dictionary parent class [specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md),
+following the vsm-dictionary parent class [specification](https://github.com/vsm/vsm-dictionary/blob/master/Dictionary.spec.md),
 there can be only be 4 cases of queries that are send to BioPortal:
 
 - Non proper `filter.id` and `filter.dictID` or `options.filter` is an 
@@ -308,7 +308,7 @@ The parameters are as follows:
 - The `ontologies` part of the URL corresponds to the sub-dictionaries from 
 where we want to get terms. This parameter is being built according to the 
 values of `options.filter.dictID` and `options.sort.dictID` as well as the
-[specification](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md)
+[specification](https://github.com/vsm/vsm-dictionary/blob/master/Dictionary.spec.md)
 of the vsm-dictionary parent class. Note that there can be cases where 4 URLs
 are fired (simultaneously) during a string search to get results for preferred
 dictionaries and all the rest for example (in each seperate case, both *search*
