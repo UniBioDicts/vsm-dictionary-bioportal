@@ -13,7 +13,7 @@ const dist = path.resolve(__dirname, './dist');
 const addSourceMap = false;
 
 
-module.exports = (env = {}) => ({
+module.exports = () => ({
 
   mode: 'production',
 

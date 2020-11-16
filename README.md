@@ -22,13 +22,16 @@ Run: `npm install`
 
 ## Example use
 
-You first need to have a BioPortal account to use this dictionary. Once you 
-have an account, you will be given an API key to authorise your access to 
-the provided REST API's resources. Then, you can create a `test.js` file and
-include this code for example:
+You first need to have a BioPortal account to use this dictionary. 
+Once you have an account, you will be given an API key to authorise your access to the provided REST API's resources. 
+
+### Node.js
+
+Create a directory `test-dir` and inside run `npm install vsm-dictionary-bioportal`.
+Then, create a `test.js` file and include this code for example:
 
 ```javascript
-const DictionaryBioPortal = require('./DictionaryBioPortal');
+const DictionaryBioPortal = require('vsm-dictionary-bioportal');
 const apiKeyString = 'a-valid-API-key-string';
 const dict = new DictionaryBioPortal({apiKey: apiKeyString});
 
@@ -51,6 +54,13 @@ dict.getEntryMatchesForString('melanoma',
 );
 ```
 Then, run `node test.js`
+
+### Browsers
+
+```html
+<script src="https://unpkg.com/vsm-dictionary-bioportal@^1.2.0/dist/vsm-dictionary-bioportal.min.js"></script>
+```
+after which it is accessible as the global variable `VsmDictionaryBioPortal`.
 
 ## Tests
 
@@ -90,9 +100,7 @@ To use a VsmDictionary in Node.js, one can simply run `npm install` and then
 use `require()`. But it is also convenient to have a version of the code that
 can just be loaded via a &lt;script&gt;-tag in the browser.
 
-Therefore, we included `webpack.config.js` (note: the one in the root folder, 
-_not_ the one in the 'demo' folder), which is a Webpack configuration file for 
-generating such a browser-ready package.
+Therefore, we included [webpack.config.js](https://github.com/UniBioDicts/vsm-dictionary-bioportal/blob/master/webpack.config.js), which is a Webpack configuration file for generating such a browser-ready package.
 
 By running `npm build`, the built file will appear in a 'dist' subfolder. 
 A demo-use of this file can then be seen by opening `demo-build.html` 
