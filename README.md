@@ -1,7 +1,7 @@
 # vsm-dictionary-bioportal
 
 <!-- badges: start -->
-[![Build Status](https://travis-ci.com/UniBioDicts/vsm-dictionary-bioportal.svg?branch=master)](https://travis-ci.com/UniBioDicts/vsm-dictionary-bioportal)
+[![Node.js CI](https://github.com/UniBioDicts/vsm-dictionary-bioportal/workflows/Node.js%20CI/badge.svg)](https://github.com/UniBioDicts/vsm-dictionary-bioportal/actions)
 [![codecov](https://codecov.io/gh/UniBioDicts/vsm-dictionary-bioportal/branch/master/graph/badge.svg)](https://codecov.io/gh/UniBioDicts/vsm-dictionary-bioportal)
 [![npm version](https://img.shields.io/npm/v/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
 [![Downloads](https://img.shields.io/npm/dm/vsm-dictionary-bioportal)](https://www.npmjs.com/package/vsm-dictionary-bioportal)
